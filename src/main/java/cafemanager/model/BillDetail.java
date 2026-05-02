@@ -1,87 +1,48 @@
 package cafemanager.model;
 
-import jakarta.persistence.*;
+import java.math.BigDecimal;
 
-@Entity
-@Table(name = "bill_detail")
 public class BillDetail {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int detailId;
-
+    private int billId;
+    private int productId;
+    
+    // Snapshot: Lưu tên và giá tại thời điểm bán (không tham chiếu động)
+    private String productName;
+    private BigDecimal unitPrice;      // ✅ BigDecimal
     private int quantity;
-    private double unitPrice; // Giá lúc bán
-    private double subtotal;
-
-    @ManyToOne
-    @JoinColumn(name = "bill_id")
-    private Bill bill;
-
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    private BigDecimal subtotal;       // ✅ BigDecimal = unitPrice × quantity
 
     public BillDetail() {}
 
-    public BillDetail(int detailId, int quantity, double unitPrice, double subtotal, Bill bill, Product product) {
-        this.detailId = detailId;
-        this.quantity = quantity;
+    public BillDetail(int productId, String productName, BigDecimal unitPrice, int quantity) {
+        this.productId = productId;
+        this.productName = productName;
         this.unitPrice = unitPrice;
-        this.subtotal = subtotal;
-        this.bill = bill;
-        this.product = product;
-    }
-
-    public int getDetailId() {
-        return detailId;
-    }
-
-    public void setDetailId(int detailId) {
-        this.detailId = detailId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
         this.quantity = quantity;
+        // Tự tính subtotal khi khởi tạo
+        this.subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
-    public double getUnitPrice() {
-        return unitPrice;
-    }
+    // Getters & Setters
+    public int getDetailId() { return detailId; }
+    public void setDetailId(int detailId) { this.detailId = detailId; }
 
-    public void setUnitPrice(double unitPrice) {
-        this.unitPrice = unitPrice;
-    }
+    public int getBillId() { return billId; }
+    public void setBillId(int billId) { this.billId = billId; }
 
-    public double getSubtotal() {
-        return subtotal;
-    }
+    public int getProductId() { return productId; }
+    public void setProductId(int productId) { this.productId = productId; }
 
-    public void setSubtotal(double subtotal) {
-        this.subtotal = subtotal;
-    }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
 
-    public Bill getBill() {
-        return bill;
-    }
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
 
-    public void setBill(Bill bill) {
-        this.bill = bill;
-    }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-    
-    
-    
-    
-    
+    public BigDecimal getSubtotal() { return subtotal; }
+    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
 }

@@ -1,82 +1,52 @@
 package cafemanager.model;
-import jakarta.persistence.*;
-@Entity
-@Table(name = "product")
+
+import java.math.BigDecimal;
+
 public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int productId;
-    
-    @Column(name = "product_name", length = 200, nullable = false)
+    private int categoryId;
     private String productName;
-    
-    private double price;
+    private BigDecimal price;      // ✅ BigDecimal thay vì double
     private String imageUrl;
     private boolean isActive;
     
-    @ManyToOne
-    @JoinColumn(name = "category_id") // Khóa ngoại liên kết sang bảng Category
+    // Composition: Product chứa đối tượng Category (để hiển thị tên danh mục)
     private Category category;
 
     public Product() {}
 
-    public Product(int productId, Category category, String productName, double price, String imageUrl, boolean isActive) {
+    public Product(int productId, String productName, BigDecimal price, int categoryId, boolean isActive) {
         this.productId = productId;
-        this.category = category;
         this.productName = productName;
         this.price = price;
-        this.imageUrl = imageUrl;
+        this.categoryId = categoryId;
         this.isActive = isActive;
     }
 
-    public int getProductId() {
-        return productId;
-    }
+    // Getters & Setters
+    public int getProductId() { return productId; }
+    public void setProductId(int productId) { this.productId = productId; }
 
-    public void setProductId(int productId) {
-        this.productId = productId;
-    }
+    public int getCategoryId() { return categoryId; }
+    public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
-    public String getProductName() {
-        return productName;
-    }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 
-    public double getPrice() {
-        return price;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public void setPrice(double price) {
-        this.price = price;
-    }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+    public Category getCategory() { return category; }
+    public void setCategory(Category category) { this.category = category; }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    @Override
+    public String toString() {
+        return productName + " - " + price + "₫";
     }
-
-    public boolean isIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-    
-    
-    
 }

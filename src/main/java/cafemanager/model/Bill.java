@@ -1,93 +1,58 @@
 package cafemanager.model;
-import jakarta.persistence.*;
-import java.util.Date;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-
-@Entity
-@Table(name = "bill")
 public class Bill {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int billId;
+    private int accountId;
+    private LocalDateTime createdAt;
+    private BigDecimal totalAmount;    // ✅ BigDecimal
+    private String status;             // "PENDING", "PAID", "CANCELLED"
     
+    // Composition: Bill chứa danh sách BillDetail
+    private List<BillDetail> billDetails = new ArrayList<>();
     
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at")
-    private Date createdAt;
-    
-    
-    private double totalAmount;
-    private String status; // Enum: Pending, Paid, Cancelled
-    
-    @ManyToOne
-    @JoinColumn(name = "account_id")
+    // Tham chiếu đến Account (để hiển thị tên nhân viên)
     private Account account;
-    
-    
-    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL)
-    private List<BillDetail> billDetails;
-        
-    
+
     public Bill() {}
 
-    public Bill(int billId, Date createdAt, double totalAmount, String status, Account account, List<BillDetail> billDetails) {
-        this.billId = billId;
-        this.createdAt = createdAt;
+    public Bill(int accountId, BigDecimal totalAmount, String status) {
+        this.accountId = accountId;
         this.totalAmount = totalAmount;
         this.status = status;
-        this.account = account;
-        this.billDetails = billDetails;
+        this.createdAt = LocalDateTime.now();
     }
 
-    public int getBillId() {
-        return billId;
+    // Helper method: Thêm chi tiết vào hóa đơn
+    public void addDetail(BillDetail detail) {
+        billDetails.add(detail);
+        // Tự cập nhật totalAmount khi thêm món
+        this.totalAmount = this.totalAmount.add(detail.getSubtotal());
     }
 
-    public void setBillId(int billId) {
-        this.billId = billId;
-    }
+    // Getters & Setters
+    public int getBillId() { return billId; }
+    public void setBillId(int billId) { this.billId = billId; }
 
-    public Date getCreatedAt() {
-        return createdAt;
-    }
+    public int getAccountId() { return accountId; }
+    public void setAccountId(int accountId) { this.accountId = accountId; }
 
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public double getTotalAmount() {
-        return totalAmount;
-    }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public String getStatus() {
-        return status;
-    }
+    public List<BillDetail> getBillDetails() { return billDetails; }
+    public void setBillDetails(List<BillDetail> billDetails) { this.billDetails = billDetails; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setAccount(Account account) {
-        this.account = account;
-    }
-
-    public List<BillDetail> getBillDetails() {
-        return billDetails;
-    }
-
-    public void setBillDetails(List<BillDetail> billDetails) {
-        this.billDetails = billDetails;
-    }
-
-    
+    public Account getAccount() { return account; }
+    public void setAccount(Account account) { this.account = account; }
 }

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mycompany</groupId>
     <artifactId>JAVA_COFFEE_MGM</artifactId>
@@ -8,33 +12,54 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>25</maven.compiler.release>
-        <!-- Nhớ cập nhật lại đường dẫn Main class nếu bạn di chuyển file Main.java -->
-        <exec.mainClass>com.mycompany.java_coffee_mgm.JAVA_COFFEE_MGM</exec.mainClass>
+        <!-- ✅ Dùng Java 17 (ổn định, phổ biến) thay vì 25 (chưa tồn tại) -->
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <!-- ✅ Sửa path Main class cho đúng -->
+        <exec.mainClass>cafemanager.Main</exec.mainClass>
     </properties>
 
-    <!-- DÁN KHỐI NÀY VÀO ĐÂY -->
     <dependencies>
-        <!-- Hibernate Core: Thư viện xử lý ORM và Auto-Migration -->
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>6.4.4.Final</version>
-        </dependency>
-
-        <!-- MySQL Connector: Driver kết nối cơ sở dữ liệu -->
+        <!-- ✅ MySQL Connector JDBC (chỉ giữ 1 bản duy nhất) -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>8.3.0</version>
+            <scope>runtime</scope>
         </dependency>
         
-        <!-- Jakarta Persistence API: Tiêu chuẩn quản lý dữ liệu của Java -->
+        <!-- ✅ FlatLaf cho giao diện đẹp -->
         <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-            <version>3.1.0</version>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        
+        <!-- ✅ AbsoluteLayout (nếu bạn dùng GUI Builder của NetBeans) -->
+        <dependency>
+            <groupId>org.netbeans.external</groupId>
+            <artifactId>AbsoluteLayout</artifactId>
+            <version>RELEASE290</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.toedter</groupId>
+            <artifactId>jcalendar</artifactId>
+            <version>1.4</version>
         </dependency>
     </dependencies>
     
+    <build>
+        <plugins>
+            <!-- Plugin để chạy app bằng mvn exec:java -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>${exec.mainClass}</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -19,8 +19,8 @@ public class ProductDAO {
                 Product p = new Product();
                 p.setProductId(rs.getInt("product_id"));
                 p.setProductName(rs.getString("product_name"));
-                p.setPrice(rs.getDouble("price"));
-                p.setIsActive(rs.getBoolean("is_active"));
+                p.setPrice(rs.getBigDecimal("price"));
+                p.setActive(rs.getBoolean("is_active"));
                 list.add(p);
             }
         }

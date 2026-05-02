@@ -1,38 +1,28 @@
 package cafemanager.model;
-import jakarta.persistence.*;
-@Entity
-@Table(name = "account")
-public class Account {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int accountId;
-    
-    @Column(unique = true, nullable = false, length = 50)
-    private String username;
-    
-    @Column(nullable = false)
-    private String password;
-    
-    @Column(name = "full_name")
-    private String fullName;
-    
-    private String role; // Enum trong DB: Admin, Staff, Customer
-    private boolean isActive;
 
-    // Constructor không đối số
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+public class Account {
+    private int accountId;
+    private String username;
+    private String password;      // Đã hash (BCrypt)
+    private String fullName;
+    private String role;          // "ADMIN" hoặc "STAFF"
+    private boolean isActive;
+    private LocalDateTime createdAt;
+
     public Account() {}
 
-    // Constructor đầy đủ đối số
-    public Account(int accountId, String username, String password, String fullName, String role, boolean isActive) {
+    public Account(int accountId, String username, String fullName, String role, boolean isActive) {
         this.accountId = accountId;
         this.username = username;
-        this.password = password;
         this.fullName = fullName;
         this.role = role;
         this.isActive = isActive;
     }
 
-    // Các hàm Getter và Setter (Tạo tự động bằng Alt + Insert)
+    // Getters & Setters
     public int getAccountId() { return accountId; }
     public void setAccountId(int accountId) { this.accountId = accountId; }
 
@@ -48,6 +38,9 @@ public class Account {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
-    public boolean isIsActive() { return isActive; }
-    public void setIsActive(boolean isActive) { this.isActive = isActive; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

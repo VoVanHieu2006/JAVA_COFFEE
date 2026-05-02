@@ -1,25 +1,16 @@
 package cafemanager.model;
-import jakarta.persistence.*;
-import java.util.List;
 
-@Entity
-@Table(name = "category")
 public class Category {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int categoryId;
-    
-    @Column(name = "category_name", length = 100, nullable = false)
     private String categoryName;
-    
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private List<Product> products;
-    
     private String description;
-    
-    
-    
+
     public Category() {}
+
+    public Category(int categoryId, String categoryName) {
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
+    }
 
     public Category(int categoryId, String categoryName, String description) {
         this.categoryId = categoryId;
@@ -27,6 +18,7 @@ public class Category {
         this.description = description;
     }
 
+    // Getters & Setters
     public int getCategoryId() { return categoryId; }
     public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
@@ -35,4 +27,9 @@ public class Category {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    @Override
+    public String toString() {
+        return categoryName; // Hiển thị tên khi dùng trong JComboBox
+    }
 }
