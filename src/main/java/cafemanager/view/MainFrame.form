@@ -48,7 +48,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
-              <BorderConstraints direction="Before"/>
+              <BorderConstraints direction="Center"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -113,6 +113,15 @@
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="STATS">
                 <Property name="tabTitle" type="java.lang.String" value="STATS"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+        </Component>
+        <Component class="cafemanager.view.InvoiceHistoryPanel" name="invoiceHistoryPanel1">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="BILL">
+                <Property name="tabTitle" type="java.lang.String" value="BILL"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
