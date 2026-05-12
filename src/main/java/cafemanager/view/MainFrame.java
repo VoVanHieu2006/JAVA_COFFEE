@@ -18,6 +18,9 @@ public class MainFrame extends javax.swing.JFrame {
     /**
      * Creates new form LoginFrame
      */
+    
+    
+    
     public MainFrame() {
         initComponents();
         this.setLocationRelativeTo(null);
@@ -54,6 +57,13 @@ public class MainFrame extends javax.swing.JFrame {
     private void registerEvents() {
         btnLogOut.addActionListener(evt -> handleLogout());
         jTabbedPanel.addChangeListener(evt -> handleTabChange());
+        
+        // Khi MenuPanel báo "có thay đổi", ta gọi hàm loadProducts() của POSPanel
+        menuPanel1.setOnDataChangedCallback(() -> {
+            if (pOSPanel2 != null) {
+                pOSPanel2.loadProducts(); 
+            }
+        });
     }
 
     private void handleTabChange() {
@@ -90,6 +100,8 @@ public class MainFrame extends javax.swing.JFrame {
         loginFrame.setVisible(true);
         dispose();
     }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -99,7 +111,7 @@ public class MainFrame extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jButton1 = new javax.swing.JButton();
