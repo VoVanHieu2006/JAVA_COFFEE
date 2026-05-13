@@ -15,6 +15,7 @@ import javax.swing.table.DefaultTableModel;
 public class AccountPanel extends javax.swing.JPanel {
     private final AccountController controller = new AccountController();
     private DefaultTableModel tableModel;
+    private List<Account> displayedAccounts;
 
     public AccountPanel() {
         initComponents();
@@ -26,7 +27,7 @@ public class AccountPanel extends javax.swing.JPanel {
     }
 
     private void initTableModel() {
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Username", "Họ tên", "Vai trò", "Trạng thái"}, 0) {
+        tableModel = new DefaultTableModel(new Object[]{"STT", "Username", "Họ tên", "Vai trò", "Trạng thái"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -60,17 +61,17 @@ public class AccountPanel extends javax.swing.JPanel {
         styleInput(txtUsername, 170);
         styleInput(txtPassword, 170);
         styleInput(txtFullName, 230);
+        UIHelper.styleComboBox(cbRole);
         cbRole.setPreferredSize(new Dimension(120, 34));
         cbRole.setMinimumSize(new Dimension(120, 34));
-        cbRole.setFont(UIHelper.FONT_BASE);
         chkActive.setFont(UIHelper.FONT_BASE);
         chkActive.setBackground(UIHelper.APP_BG);
 
         UIHelper.stylePrimaryButton(btnAdd);
-        UIHelper.styleButton(btnUpdate);
-        UIHelper.styleButton(btnPassword);
-        UIHelper.styleButton(btnToggleActive);
-        UIHelper.styleButton(btnRefresh);
+        UIHelper.styleSecondaryButton(btnUpdate);
+        UIHelper.styleSecondaryButton(btnPassword);
+        UIHelper.styleOutlineDangerButton(btnToggleActive);
+        UIHelper.styleSecondaryButton(btnRefresh);
     }
 
     private void styleInput(JTextField field, int width) {
@@ -98,14 +99,16 @@ public class AccountPanel extends javax.swing.JPanel {
     private void loadAccounts() {
         try {
             List<Account> accounts = controller.loadAccounts();
+            displayedAccounts = accounts;
             tableModel.setRowCount(0);
-            for (Account account : accounts) {
+            for (int i = 0; i < accounts.size(); i++) {
+                Account account = accounts.get(i);
                 tableModel.addRow(new Object[]{
-                    account.getAccountId(),
+                    i + 1,
                     account.getUsername(),
                     account.getFullName(),
-                    account.getRole(),
-                    account.isActive() ? "Active" : "Inactive"
+                    mapRole(account.getRole()),
+                    mapActiveStatus(account.isActive())
                 });
             }
             updateToggleButtonBySelection();
@@ -198,17 +201,21 @@ public class AccountPanel extends javax.swing.JPanel {
         }
         txtUsername.setText(String.valueOf(tableModel.getValueAt(modelRow, 1)));
         txtFullName.setText(String.valueOf(tableModel.getValueAt(modelRow, 2)));
-        cbRole.setSelectedItem(String.valueOf(tableModel.getValueAt(modelRow, 3)));
-        chkActive.setSelected("Active".equals(String.valueOf(tableModel.getValueAt(modelRow, 4))));
+        Account account = getSelectedAccount(modelRow);
+        if (account != null) {
+            cbRole.setSelectedItem(account.getRole());
+            chkActive.setSelected(account.isActive());
+        }
         txtPassword.setText("");
     }
 
     private int getSelectedAccountId() {
         int modelRow = getSelectedModelRow();
-        if (modelRow < 0) {
+        Account account = getSelectedAccount(modelRow);
+        if (account == null) {
             return -1;
         }
-        return ((Number) tableModel.getValueAt(modelRow, 0)).intValue();
+        return account.getAccountId();
     }
 
     private int getSelectedModelRow() {
@@ -221,34 +228,62 @@ public class AccountPanel extends javax.swing.JPanel {
 
     private boolean isSelectedAccountActive() {
         int modelRow = getSelectedModelRow();
-        if (modelRow < 0) {
+        Account account = getSelectedAccount(modelRow);
+        if (account == null) {
             return false;
         }
-        return "Active".equals(String.valueOf(tableModel.getValueAt(modelRow, 4)));
+        return account.isActive();
     }
 
     private void updateToggleButtonBySelection() {
         int modelRow = getSelectedModelRow();
-        if (modelRow < 0) {
+        Account account = getSelectedAccount(modelRow);
+        if (account == null) {
             btnToggleActive.setText("Khóa / Mở khóa");
             btnToggleActive.setEnabled(false);
             return;
         }
-        boolean active = "Active".equals(String.valueOf(tableModel.getValueAt(modelRow, 4)));
+        boolean active = account.isActive();
         btnToggleActive.setText(active ? "Khóa" : "Mở khóa");
         btnToggleActive.setEnabled(true);
     }
 
     private void selectAccountById(int accountId) {
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            Object value = tableModel.getValueAt(i, 0);
-            if (value instanceof Number && ((Number) value).intValue() == accountId) {
+        if (displayedAccounts == null) {
+            return;
+        }
+        for (int i = 0; i < displayedAccounts.size(); i++) {
+            if (displayedAccounts.get(i).getAccountId() == accountId) {
                 int viewRow = tblAccounts.convertRowIndexToView(i);
                 tblAccounts.setRowSelectionInterval(viewRow, viewRow);
                 tblAccounts.scrollRectToVisible(tblAccounts.getCellRect(viewRow, 0, true));
                 return;
             }
         }
+    }
+
+    private Account getSelectedAccount(int modelRow) {
+        if (modelRow < 0 || displayedAccounts == null || modelRow >= displayedAccounts.size()) {
+            return null;
+        }
+        return displayedAccounts.get(modelRow);
+    }
+
+    private String mapRole(String role) {
+        if (role == null) {
+            return "";
+        }
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return "Quản lý";
+        }
+        if ("STAFF".equalsIgnoreCase(role)) {
+            return "Nhân viên";
+        }
+        return role;
+    }
+
+    private String mapActiveStatus(boolean active) {
+        return active ? "Đang hoạt động" : "Ngừng hoạt động";
     }
 
     private String getPasswordText() {

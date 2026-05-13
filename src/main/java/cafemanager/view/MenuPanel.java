@@ -3,35 +3,282 @@ package cafemanager.view;
 import cafemanager.controller.MenuController;
 import cafemanager.model.Category;
 import cafemanager.model.Product;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Frame;
-import java.math.BigDecimal;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-/**
- * Panel quản lý thực đơn.
- *
- * View chịu trách nhiệm hiển thị JTable/JComboBox/Dialog. Controller chỉ trả dữ liệu
- * và thực hiện nghiệp vụ thông qua DAO. Cách tách này giúp module bám MVC hơn.
- */
 public class MenuPanel extends javax.swing.JPanel {
 
     private final MenuController controller = new MenuController();
+    private final javax.swing.JButton btRefreshProduct = new javax.swing.JButton("Làm mới");
     private DefaultTableModel catModel;
     private DefaultTableModel prodModel;
     private List<Category> categoryCache = new ArrayList<>();
+    private List<Category> displayedCategories = new ArrayList<>();
+    private List<Product> displayedProducts = new ArrayList<>();
+
+    private JTable tbProducts;
+    private JTable tbCategories;
+    private JScrollPane spProducts;
+    private JScrollPane spCategories;
+    private JTextField tfProductName;
+    private JTextField tfPriceFrom;
+    private JTextField tfPriceTo;
+    private JComboBox<Category> cbbCategory;
+    private JTextField tfSearchByCategory;
+
+    private javax.swing.JButton btAddProduct;
+    private javax.swing.JButton btEditProduct;
+    private javax.swing.JButton btDelProduct;
+    private javax.swing.JButton btAddCat;
+    private javax.swing.JButton btEditCat;
+    private javax.swing.JButton btDelCat;
+
+    private JLabel lbProductTitle;
+    private JLabel lbCategoryTitle;
+    private JLabel lbProductName;
+    private JLabel lbPriceFrom;
+    private JLabel lbPriceTo;
+    private JLabel lbCategory;
+    private JLabel lbSearchCategory;
 
     public MenuPanel() {
-        initComponents();
+        initComponentsRuntime();
+        buildLayout();
+        applyStyles();
         initModels();
         initEvents();
         loadAll();
+    }
+
+    private void initComponentsRuntime() {
+        setPreferredSize(new Dimension(950, 560));
+
+        tbProducts = new JTable();
+        tbProducts.setModel(new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"STT", "Tên món", "Danh mục", "Giá", "Trạng thái"}) {
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return false;
+            }
+        });
+        spProducts = new JScrollPane(tbProducts);
+
+        tbCategories = new JTable();
+        tbCategories.setModel(new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"STT", "Tên danh mục"}) {
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return false;
+            }
+        });
+        spCategories = new JScrollPane(tbCategories);
+
+        tfProductName = new JTextField();
+        tfPriceFrom = new JTextField();
+        tfPriceTo = new JTextField();
+        cbbCategory = new JComboBox<>();
+        tfSearchByCategory = new JTextField();
+
+        btAddProduct = new javax.swing.JButton("Thêm món");
+        btEditProduct = new javax.swing.JButton("Sửa món");
+        btDelProduct = new javax.swing.JButton("Xóa món");
+        btAddCat = new javax.swing.JButton("Thêm");
+        btEditCat = new javax.swing.JButton("Sửa");
+        btDelCat = new javax.swing.JButton("Xóa");
+
+        lbProductTitle = new JLabel("QUẢN LÝ SẢN PHẨM");
+        lbCategoryTitle = new JLabel("QUẢN LÝ DANH MỤC");
+        lbProductName = new JLabel("Tên món:");
+        lbPriceFrom = new JLabel("Giá từ:");
+        lbPriceTo = new JLabel("Giá đến:");
+        lbCategory = new JLabel("Danh mục:");
+        lbSearchCategory = new JLabel("Tìm kiếm danh mục:");
+    }
+
+    private void buildLayout() {
+        removeAll();
+        setLayout(new BorderLayout());
+
+        JPanel productSection = buildProductSection();
+        JPanel categorySection = buildCategorySection();
+
+        javax.swing.JSplitPane splitPane = new javax.swing.JSplitPane(
+                javax.swing.JSplitPane.HORIZONTAL_SPLIT, productSection, categorySection);
+        splitPane.setResizeWeight(0.66);
+        splitPane.setDividerSize(6);
+        splitPane.setBorder(null);
+        splitPane.setContinuousLayout(true);
+        add(splitPane, BorderLayout.CENTER);
+    }
+
+    private JPanel buildProductSection() {
+        JPanel section = new JPanel(new BorderLayout(0, 10));
+        section.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UIHelper.BORDER),
+                BorderFactory.createEmptyBorder(14, 14, 14, 14)));
+        section.setBackground(UIHelper.PANEL_BG);
+
+        JPanel topPanel = new JPanel(new BorderLayout(0, 8));
+        topPanel.setOpaque(false);
+        topPanel.add(lbProductTitle, BorderLayout.NORTH);
+
+        JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        filterRow.setOpaque(false);
+        filterRow.add(lbProductName);
+        filterRow.add(tfProductName);
+        filterRow.add(lbPriceFrom);
+        filterRow.add(tfPriceFrom);
+        filterRow.add(lbPriceTo);
+        filterRow.add(tfPriceTo);
+        filterRow.add(lbCategory);
+        filterRow.add(cbbCategory);
+
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        buttonRow.setOpaque(false);
+        buttonRow.add(btAddProduct);
+        buttonRow.add(btEditProduct);
+        buttonRow.add(btDelProduct);
+        buttonRow.add(btRefreshProduct);
+
+        JPanel controls = new JPanel(new BorderLayout(0, 8));
+        controls.setOpaque(false);
+        controls.add(filterRow, BorderLayout.NORTH);
+        controls.add(buttonRow, BorderLayout.SOUTH);
+        topPanel.add(controls, BorderLayout.CENTER);
+
+        section.add(topPanel, BorderLayout.NORTH);
+        section.add(spProducts, BorderLayout.CENTER);
+        return section;
+    }
+
+    private JPanel buildCategorySection() {
+        JPanel section = new JPanel(new BorderLayout(0, 10));
+        section.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UIHelper.BORDER),
+                BorderFactory.createEmptyBorder(14, 14, 14, 14)));
+        section.setBackground(UIHelper.PANEL_BG);
+
+        JPanel topPanel = new JPanel(new BorderLayout(0, 8));
+        topPanel.setOpaque(false);
+        topPanel.add(lbCategoryTitle, BorderLayout.NORTH);
+
+        JPanel searchRow = new JPanel(new BorderLayout(0, 8));
+        searchRow.setOpaque(false);
+        JPanel searchInput = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        searchInput.setOpaque(false);
+        searchInput.add(lbSearchCategory);
+        searchInput.add(tfSearchByCategory);
+
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        buttonRow.setOpaque(false);
+        buttonRow.add(btAddCat);
+        buttonRow.add(btEditCat);
+        buttonRow.add(btDelCat);
+
+        searchRow.add(searchInput, BorderLayout.NORTH);
+        searchRow.add(buttonRow, BorderLayout.SOUTH);
+        topPanel.add(searchRow, BorderLayout.CENTER);
+
+        section.add(topPanel, BorderLayout.NORTH);
+        section.add(spCategories, BorderLayout.CENTER);
+        return section;
+    }
+
+    private void applyStyles() {
+        setBackground(UIHelper.APP_BG);
+
+        UIHelper.styleSectionTitle(lbProductTitle);
+        UIHelper.styleSectionTitle(lbCategoryTitle);
+        lbProductTitle.setFont(UIHelper.FONT_SECTION_TITLE.deriveFont(19f));
+        lbCategoryTitle.setFont(UIHelper.FONT_SECTION_TITLE.deriveFont(19f));
+        lbProductTitle.setForeground(UIHelper.TEXT_DARK);
+        lbCategoryTitle.setForeground(UIHelper.TEXT_DARK);
+
+        lbSearchCategory.setFont(UIHelper.FONT_BASE);
+        lbProductName.setFont(UIHelper.FONT_BASE);
+        lbPriceFrom.setFont(UIHelper.FONT_BASE);
+        lbPriceTo.setFont(UIHelper.FONT_BASE);
+        lbCategory.setFont(UIHelper.FONT_BASE);
+
+        UIHelper.styleTextField(tfSearchByCategory);
+        UIHelper.styleTextField(tfProductName);
+        UIHelper.styleTextField(tfPriceFrom);
+        UIHelper.styleTextField(tfPriceTo);
+        UIHelper.styleComboBox(cbbCategory);
+
+        setMinPref(tfProductName, 210, 36);
+        setMinPref(tfPriceFrom, 110, 36);
+        setMinPref(tfPriceTo, 110, 36);
+        setMinPref(cbbCategory, 190, 36);
+        setMinPref(tfSearchByCategory, 260, 36);
+
+        UIHelper.stylePrimaryButton(btAddProduct);
+        UIHelper.styleSecondaryButton(btEditProduct);
+        UIHelper.styleOutlineDangerButton(btDelProduct);
+        UIHelper.styleSecondaryButton(btRefreshProduct);
+        setFixedSize(btAddProduct, 130, 38);
+        setFixedSize(btEditProduct, 120, 38);
+        setFixedSize(btDelProduct, 120, 38);
+        setFixedSize(btRefreshProduct, 120, 38);
+
+        UIHelper.stylePrimaryButton(btAddCat);
+        UIHelper.styleSecondaryButton(btEditCat);
+        UIHelper.styleOutlineDangerButton(btDelCat);
+        setFixedSize(btAddCat, 100, 38);
+        setFixedSize(btEditCat, 100, 38);
+        setFixedSize(btDelCat, 100, 38);
+
+        UIHelper.styleTable(tbProducts);
+        UIHelper.styleTable(tbCategories);
+        UIHelper.alignCenterColumn(tbProducts, 0);
+        UIHelper.alignMoneyColumn(tbProducts, 3);
+        UIHelper.alignCenterColumn(tbProducts, 4);
+        UIHelper.alignCenterColumn(tbCategories, 0);
+        setSttColumnWidth(tbProducts);
+        setSttColumnWidth(tbCategories);
+    }
+
+    private void setFixedSize(java.awt.Component component, int w, int h) {
+        Dimension size = new Dimension(w, h);
+        component.setPreferredSize(size);
+        component.setMinimumSize(size);
+        component.setMaximumSize(size);
+    }
+
+    private void setMinPref(java.awt.Component component, int w, int h) {
+        Dimension size = new Dimension(w, h);
+        component.setPreferredSize(size);
+        component.setMinimumSize(size);
+    }
+
+    private void setSttColumnWidth(JTable table) {
+        if (table == null || table.getColumnCount() == 0) {
+            return;
+        }
+        table.getColumnModel().getColumn(0).setMinWidth(45);
+        table.getColumnModel().getColumn(0).setPreferredWidth(55);
+        table.getColumnModel().getColumn(0).setMaxWidth(70);
     }
 
     public void setOnDataChangedCallback(Runnable callback) {
@@ -60,6 +307,7 @@ public class MenuPanel extends javax.swing.JPanel {
         btAddCat.addActionListener(e -> addCategory());
         btEditCat.addActionListener(e -> editCategory());
         btDelCat.addActionListener(e -> deleteCategory());
+        btRefreshProduct.addActionListener(e -> refreshProductFilters());
 
         tfSearchByCategory.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { searchCategory(); }
@@ -108,6 +356,7 @@ public class MenuPanel extends javax.swing.JPanel {
     private void loadProducts() {
         try {
             displayProducts(controller.loadProducts());
+            resetProductTableScroll();
         } catch (Exception ex) {
             showError("Không thể tải sản phẩm: " + ex.getMessage());
         }
@@ -120,9 +369,20 @@ public class MenuPanel extends javax.swing.JPanel {
                     tfPriceFrom.getText(),
                     tfPriceTo.getText(),
                     getSelectedFilterCategory()));
+            resetProductTableScroll();
         } catch (Exception ex) {
             showError("Lỗi tìm kiếm sản phẩm: " + ex.getMessage());
         }
+    }
+
+    private void refreshProductFilters() {
+        tfProductName.setText("");
+        tfPriceFrom.setText("");
+        tfPriceTo.setText("");
+        if (cbbCategory.getItemCount() > 0) {
+            cbbCategory.setSelectedIndex(0);
+        }
+        loadProducts();
     }
 
     private void addCategory() {
@@ -148,8 +408,13 @@ public class MenuPanel extends javax.swing.JPanel {
             showWarning("Vui lòng chọn danh mục cần sửa.");
             return;
         }
-        int categoryId = ((Number) catModel.getValueAt(modelRow, 0)).intValue();
-        String currentName = String.valueOf(catModel.getValueAt(modelRow, 1));
+        if (modelRow >= displayedCategories.size()) {
+            showWarning("Không tìm thấy danh mục cần sửa.");
+            return;
+        }
+        Category selectedCategory = displayedCategories.get(modelRow);
+        int categoryId = selectedCategory.getCategoryId();
+        String currentName = selectedCategory.getCategoryName();
         String newName = (String) JOptionPane.showInputDialog(this,
                 "Tên danh mục:", "Sửa danh mục",
                 JOptionPane.PLAIN_MESSAGE, null, null, currentName);
@@ -173,8 +438,13 @@ public class MenuPanel extends javax.swing.JPanel {
             showWarning("Vui lòng chọn danh mục cần xóa.");
             return;
         }
-        int categoryId = ((Number) catModel.getValueAt(modelRow, 0)).intValue();
-        String categoryName = String.valueOf(catModel.getValueAt(modelRow, 1));
+        if (modelRow >= displayedCategories.size()) {
+            showWarning("Không tìm thấy danh mục cần xóa.");
+            return;
+        }
+        Category selectedCategory = displayedCategories.get(modelRow);
+        int categoryId = selectedCategory.getCategoryId();
+        String categoryName = selectedCategory.getCategoryName();
         try {
             if (controller.isCategoryInUse(categoryId)) {
                 showWarning("Danh mục \"" + categoryName + "\" đang được dùng bởi sản phẩm, không thể xóa.");
@@ -224,7 +494,12 @@ public class MenuPanel extends javax.swing.JPanel {
         if (!ensureCategoryCache()) {
             return;
         }
-        int productId = ((Number) prodModel.getValueAt(modelRow, 0)).intValue();
+        if (modelRow >= displayedProducts.size()) {
+            showWarning("Không tìm thấy sản phẩm cần sửa.");
+            return;
+        }
+        Product selectedProduct = displayedProducts.get(modelRow);
+        int productId = selectedProduct.getProductId();
         try {
             Product existing = controller.findProductById(productId);
             if (existing == null) {
@@ -252,10 +527,15 @@ public class MenuPanel extends javax.swing.JPanel {
             showWarning("Vui lòng chọn sản phẩm cần ẩn.");
             return;
         }
-        int productId = ((Number) prodModel.getValueAt(modelRow, 0)).intValue();
-        String productName = String.valueOf(prodModel.getValueAt(modelRow, 1));
+        if (modelRow >= displayedProducts.size()) {
+            showWarning("Không tìm thấy sản phẩm cần ẩn.");
+            return;
+        }
+        Product selectedProduct = displayedProducts.get(modelRow);
+        int productId = selectedProduct.getProductId();
+        String productName = selectedProduct.getProductName();
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Sản phẩm \"" + productName + "\" sẽ bị ẩn khỏi thực đơn. Lịch sử hóa đơn vẫn được giữ. Tiếp tục?",
+                "Sản phẩm \"" + productName + "\" sẽ bị ẩn khỏi thực đơn. Tiếp tục?",
                 "Xác nhận ẩn sản phẩm", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
@@ -271,15 +551,17 @@ public class MenuPanel extends javax.swing.JPanel {
     }
 
     private void displayCategories(List<Category> categories) {
+        displayedCategories = new ArrayList<>(categories);
         catModel.setRowCount(0);
-        for (Category category : categories) {
-            catModel.addRow(new Object[]{category.getCategoryId(), category.getCategoryName()});
+        for (int i = 0; i < categories.size(); i++) {
+            Category category = categories.get(i);
+            catModel.addRow(new Object[]{i + 1, category.getCategoryName()});
         }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void displayCategoryFilter(List<Category> categories) {
-        javax.swing.JComboBox combo = cbbCategory;
+        JComboBox combo = cbbCategory;
         combo.removeAllItems();
         for (Category category : controller.buildCategoryFilterItems(categories)) {
             combo.addItem(category);
@@ -287,17 +569,30 @@ public class MenuPanel extends javax.swing.JPanel {
     }
 
     private void displayProducts(List<Product> products) {
+        displayedProducts = new ArrayList<>(products);
         prodModel.setRowCount(0);
-        for (Product product : products) {
+        for (int i = 0; i < products.size(); i++) {
+            Product product = products.get(i);
             String categoryName = product.getCategory() == null ? "" : product.getCategory().getCategoryName();
             prodModel.addRow(new Object[]{
-                product.getProductId(),
+                i + 1,
                 product.getProductName(),
                 categoryName,
-                product.getPrice(),
-                product.isActive() ? "Active" : "Inactive"
+                UIHelper.formatMoney(product.getPrice()),
+                mapActiveStatus(product.isActive())
             });
         }
+    }
+
+    private String mapActiveStatus(boolean active) {
+        return active ? "Đang hoạt động" : "Ngừng hoạt động";
+    }
+
+    private void resetProductTableScroll() {
+        if (tbProducts.getRowCount() > 0) {
+            tbProducts.scrollRectToVisible(tbProducts.getCellRect(0, 0, true));
+        }
+        spProducts.getVerticalScrollBar().setValue(0);
     }
 
     private boolean ensureCategoryCache() {
@@ -340,326 +635,4 @@ public class MenuPanel extends javax.swing.JPanel {
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
-
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
-
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        tbProducts = new javax.swing.JTable();
-        jPanel1 = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        btAddProduct = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        tbCategories = new javax.swing.JTable();
-        tfSearchByCategory = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
-        btAddCat = new javax.swing.JButton();
-        btEditCat = new javax.swing.JButton();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        btDelCat = new javax.swing.JButton();
-        jPanel4 = new javax.swing.JPanel();
-        lbCategory = new javax.swing.JLabel();
-        cbbCategory = new javax.swing.JComboBox<>();
-        lbPrice = new javax.swing.JLabel();
-        lbProductName = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        tfPriceFrom = new javax.swing.JTextField();
-        tfPriceTo = new javax.swing.JTextField();
-        tfProductName = new javax.swing.JTextField();
-        btEditProduct = new javax.swing.JButton();
-        btDelProduct = new javax.swing.JButton();
-
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane1.setViewportView(jTable1);
-
-        setPreferredSize(new java.awt.Dimension(850, 450));
-        setLayout(new java.awt.GridBagLayout());
-
-        tbProducts.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
-            },
-            new String [] {
-                "ID", "Name", "Category", "Price", "Status"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        jScrollPane3.setViewportView(tbProducts);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 17;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.ipadx = 864;
-        gridBagConstraints.ipady = 230;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 7);
-        add(jScrollPane3, gridBagConstraints);
-
-        jPanel1.setLayout(new java.awt.GridLayout(1, 2, 1, 1));
-
-        jPanel3.setLayout(new java.awt.GridLayout(1, 3, 1, 1));
-        jPanel1.add(jPanel3);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 10;
-        gridBagConstraints.ipadx = 850;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        add(jPanel1, gridBagConstraints);
-
-        btAddProduct.setBackground(new java.awt.Color(0, 153, 51));
-        btAddProduct.setForeground(new java.awt.Color(255, 255, 255));
-        btAddProduct.setText("Add Product");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.ipadx = 14;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 40, 8, 0);
-        add(btAddProduct, gridBagConstraints);
-
-        tbCategories.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null},
-                {null, null},
-                {null, null},
-                {null, null}
-            },
-            new String [] {
-                "ID", "Category Name"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        jScrollPane2.setViewportView(tbCategories);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 5;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.ipadx = 384;
-        gridBagConstraints.ipady = 100;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(5, 10, 0, 0);
-        add(jScrollPane2, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.gridheight = 3;
-        gridBagConstraints.ipadx = 206;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
-        add(tfSearchByCategory, gridBagConstraints);
-
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel1.setText("Search Category:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 0);
-        add(jLabel1, gridBagConstraints);
-
-        btAddCat.setBackground(new java.awt.Color(0, 153, 51));
-        btAddCat.setForeground(new java.awt.Color(255, 255, 255));
-        btAddCat.setText("Add Category");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.ipadx = 16;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 20, 8, 0);
-        add(btAddCat, gridBagConstraints);
-
-        btEditCat.setBackground(new java.awt.Color(0, 153, 153));
-        btEditCat.setForeground(new java.awt.Color(255, 255, 255));
-        btEditCat.setText("Edit Category");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.ipadx = 18;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 20, 8, 0);
-        add(btEditCat, gridBagConstraints);
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(255, 51, 51));
-        jLabel4.setText("CATEGORY");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 20, 0, 0);
-        add(jLabel4, gridBagConstraints);
-
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel5.setForeground(new java.awt.Color(255, 51, 51));
-        jLabel5.setText("PRODUCT");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 6;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 50, 0, 0);
-        add(jLabel5, gridBagConstraints);
-
-        btDelCat.setBackground(new java.awt.Color(255, 51, 51));
-        btDelCat.setForeground(new java.awt.Color(255, 255, 255));
-        btDelCat.setText("Delete Category");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.ipadx = 4;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 10, 8, 0);
-        add(btDelCat, gridBagConstraints);
-
-        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        lbCategory.setFont(new java.awt.Font("Segoe UI", 3, 14)); // NOI18N
-        lbCategory.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbCategory.setText("Category");
-        jPanel4.add(lbCategory, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 40, 90, 20));
-
-        cbbCategory.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jPanel4.add(cbbCategory, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 80, 100, -1));
-
-        lbPrice.setFont(new java.awt.Font("Segoe UI", 3, 14)); // NOI18N
-        lbPrice.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbPrice.setText("Price");
-        jPanel4.add(lbPrice, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 40, 80, 20));
-
-        lbProductName.setFont(new java.awt.Font("Segoe UI", 3, 14)); // NOI18N
-        lbProductName.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbProductName.setText("Product Name");
-        jPanel4.add(lbProductName, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 40, 130, 20));
-
-        jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel6.setText("Search Product By:");
-        jPanel4.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 10, -1, -1));
-
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel2.setText("-->");
-        jPanel4.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 80, -1, -1));
-
-        jLabel3.setText("From");
-        jPanel4.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 60, -1, -1));
-
-        jLabel7.setText("To");
-        jPanel4.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 60, -1, -1));
-        jPanel4.add(tfPriceFrom, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 80, 80, -1));
-        jPanel4.add(tfPriceTo, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 80, 80, -1));
-        jPanel4.add(tfProductName, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 120, -1));
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 11;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 20;
-        gridBagConstraints.ipady = 48;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(5, 10, 0, 0);
-        add(jPanel4, gridBagConstraints);
-
-        btEditProduct.setBackground(new java.awt.Color(0, 153, 153));
-        btEditProduct.setForeground(new java.awt.Color(255, 255, 255));
-        btEditProduct.setText("Edit Product");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 6;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.ipadx = 15;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 40, 8, 0);
-        add(btEditProduct, gridBagConstraints);
-
-        btDelProduct.setBackground(new java.awt.Color(255, 0, 0));
-        btDelProduct.setForeground(new java.awt.Color(255, 255, 255));
-        btDelProduct.setText("Delete Product");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 8;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 30, 8, 0);
-        add(btDelProduct, gridBagConstraints);
-    }// </editor-fold>//GEN-END:initComponents
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btAddCat;
-    private javax.swing.JButton btAddProduct;
-    private javax.swing.JButton btDelCat;
-    private javax.swing.JButton btDelProduct;
-    private javax.swing.JButton btEditCat;
-    private javax.swing.JButton btEditProduct;
-    private javax.swing.JComboBox<String> cbbCategory;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JLabel lbCategory;
-    private javax.swing.JLabel lbPrice;
-    private javax.swing.JLabel lbProductName;
-    private javax.swing.JTable tbCategories;
-    private javax.swing.JTable tbProducts;
-    private javax.swing.JTextField tfPriceFrom;
-    private javax.swing.JTextField tfPriceTo;
-    private javax.swing.JTextField tfProductName;
-    private javax.swing.JTextField tfSearchByCategory;
-    // End of variables declaration//GEN-END:variables
 }

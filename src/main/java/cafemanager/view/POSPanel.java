@@ -67,10 +67,16 @@ public class POSPanel extends javax.swing.JPanel {
     }
 
     private void applyStyles() {
+        setBackground(UIHelper.APP_BG);
+        jPanel1.setBackground(UIHelper.APP_BG);
+        jPanel2.setBackground(UIHelper.APP_BG);
+        jPanel3.setBackground(UIHelper.APP_BG);
+        jPanel10.setBackground(UIHelper.APP_BG);
+
         UIHelper.stylePrimaryButton(btnPay);
-        UIHelper.styleButton(btnAddItem);
-        UIHelper.styleButton(btnCancelOrder);
-        UIHelper.styleButton(btnRemoveItem);
+        UIHelper.stylePrimaryButton(btnAddItem);
+        UIHelper.styleSecondaryButton(btnCancelOrder);
+        UIHelper.styleOutlineDangerButton(btnRemoveItem);
         UIHelper.styleSearchField(txtSearch);
 
         btnAddItem.setPreferredSize(new Dimension(120, 34));
@@ -115,20 +121,12 @@ public class POSPanel extends javax.swing.JPanel {
 
         tblProducts.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        javax.swing.table.DefaultTableCellRenderer leftRenderer = UIHelper
-                .createCellRenderer(javax.swing.SwingConstants.LEFT);
-        javax.swing.table.DefaultTableCellRenderer centerRenderer = UIHelper
-                .createCellRenderer(javax.swing.SwingConstants.CENTER);
-        javax.swing.table.DefaultTableCellRenderer rightRenderer = UIHelper
-                .createCellRenderer(javax.swing.SwingConstants.RIGHT);
-
         UIHelper.setColumnWidth(tblProducts, 0, 160, 230);
         UIHelper.setColumnWidth(tblProducts, 1, 120, 150);
         UIHelper.setColumnWidth(tblProducts, 2, 130, 170);
-
-        tblProducts.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
-        tblProducts.getColumnModel().getColumn(1).setCellRenderer(rightRenderer);
-        tblProducts.getColumnModel().getColumn(2).setCellRenderer(leftRenderer);
+        UIHelper.alignLeftColumn(tblProducts, 0);
+        UIHelper.alignMoneyColumn(tblProducts, 1);
+        UIHelper.alignLeftColumn(tblProducts, 2);
 
         tblOrderItems.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -136,10 +134,10 @@ public class POSPanel extends javax.swing.JPanel {
         UIHelper.setColumnWidth(tblOrderItems, 1, 85, 95);
         UIHelper.setColumnWidth(tblOrderItems, 2, 40, 45);
         UIHelper.setColumnWidth(tblOrderItems, 3, 80, 95);
-        tblOrderItems.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
-        tblOrderItems.getColumnModel().getColumn(1).setCellRenderer(rightRenderer);
-        tblOrderItems.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        tblOrderItems.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+        UIHelper.alignLeftColumn(tblOrderItems, 0);
+        UIHelper.alignMoneyColumn(tblOrderItems, 1);
+        UIHelper.alignCenterColumn(tblOrderItems, 2);
+        UIHelper.alignMoneyColumn(tblOrderItems, 3);
 
         tblOrderItems.getColumnModel().getColumn(0).setHeaderValue("Tên món");
         tblOrderItems.getColumnModel().getColumn(1).setHeaderValue("Giá");

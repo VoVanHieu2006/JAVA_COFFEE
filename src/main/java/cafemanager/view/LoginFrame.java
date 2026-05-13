@@ -1,57 +1,167 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package cafemanager.view;
 
 import cafemanager.controller.AuthController;
 import cafemanager.model.Account;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
-/**
- *
- * @author PC
- */
-public class LoginFrame extends javax.swing.JFrame {
+public class LoginFrame extends JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger
             .getLogger(LoginFrame.class.getName());
+
     private final AuthController authController = new AuthController();
 
-    /**
-     * Creates new form LoginFrame
-     */
+    private JTextField txtUser;
+    private JPasswordField txtPass;
+    private JButton btnLogin;
+    private JButton btnExit;
+
     public LoginFrame() {
-        initComponents();
-        this.setLocationRelativeTo(null);
-        applyStyles();
+        buildLoginUI();
         registerEvents();
     }
 
-    private void applyStyles() {
-        getContentPane().setBackground(UIHelper.APP_BG);
-        jLabel1.setFont(UIHelper.FONT_BASE.deriveFont(java.awt.Font.BOLD, 26f));
-        jLabel2.setFont(UIHelper.FONT_BASE);
-        jLabel3.setFont(UIHelper.FONT_BASE);
+    private void buildLoginUI() {
+        setTitle("Đăng nhập - Quản lý quán cà phê");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setMinimumSize(new Dimension(800, 520));
+        setSize(new Dimension(1000, 650));
 
-        txtUser.setPreferredSize(new java.awt.Dimension(330, 42));
-        txtPass.setPreferredSize(new java.awt.Dimension(330, 42));
+        JPanel rootPanel = new JPanel(new GridBagLayout());
+        rootPanel.setBackground(UIHelper.APP_BG);
+
+        JPanel cardPanel = new JPanel(new BorderLayout());
+        cardPanel.setBackground(UIHelper.PANEL_BG);
+        cardPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UIHelper.BORDER),
+                BorderFactory.createEmptyBorder(26, 38, 26, 38)));
+        cardPanel.setPreferredSize(new Dimension(520, 380));
+        cardPanel.setMinimumSize(new Dimension(480, 340));
+        cardPanel.setMaximumSize(new Dimension(560, 420));
+        cardPanel.add(createFormPanel(), BorderLayout.CENTER);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        rootPanel.add(cardPanel, gbc);
+
+        setContentPane(rootPanel);
+        setLocationRelativeTo(null);
+    }
+
+    private JPanel createFormPanel() {
+        JPanel formPanel = new JPanel();
+        formPanel.setOpaque(false);
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+
+        JLabel lblTitle = new JLabel("QUẢN LÝ QUÁN CÀ PHÊ");
+        lblTitle.setFont(UIHelper.FONT_TITLE.deriveFont(Font.BOLD, 31f));
+        lblTitle.setForeground(UIHelper.TEXT_DARK);
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTitle.setMaximumSize(new Dimension(460, 48));
+
+        JLabel lblUser = new JLabel("Tên đăng nhập:");
+        lblUser.setFont(UIHelper.FONT_BASE);
+        lblUser.setForeground(UIHelper.TEXT_DARK);
+
+        JLabel lblPass = new JLabel("Mật khẩu:");
+        lblPass.setFont(UIHelper.FONT_BASE);
+        lblPass.setForeground(UIHelper.TEXT_DARK);
+
+        txtUser = new JTextField();
         UIHelper.styleTextField(txtUser);
-        UIHelper.styleTextField(txtPass);
+        setFixedSize(txtUser, new Dimension(360, 40));
 
+        txtPass = new JPasswordField();
+        UIHelper.styleTextField(txtPass);
         txtPass.setEchoChar('•');
         txtPass.putClientProperty("FlatLaf.style", "showRevealButton: true");
+        setFixedSize(txtPass, new Dimension(360, 40));
 
+        btnLogin = new JButton("Đăng nhập");
         UIHelper.stylePrimaryButton(btnLogin);
+        setFixedSize(btnLogin, new Dimension(160, 40));
+
+        btnExit = new JButton("Thoát");
+        UIHelper.styleSecondaryButton(btnExit);
+        setFixedSize(btnExit, new Dimension(120, 40));
+
+        JPanel userBlock = createInputBlock(lblUser, txtUser);
+        JPanel passBlock = createInputBlock(lblPass, txtPass);
+
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 0));
+        buttonRow.setOpaque(false);
+        buttonRow.add(btnLogin);
+        buttonRow.add(btnExit);
+
+        formPanel.add(Box.createVerticalGlue());
+        formPanel.add(lblTitle);
+        formPanel.add(Box.createVerticalStrut(34));
+        formPanel.add(userBlock);
+        formPanel.add(Box.createVerticalStrut(18));
+        formPanel.add(passBlock);
+        formPanel.add(Box.createVerticalStrut(28));
+        formPanel.add(buttonRow);
+        formPanel.add(Box.createVerticalGlue());
+
+        return formPanel;
+    }
+
+    private JPanel createInputBlock(JLabel label, JTextField field) {
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.setPreferredSize(new Dimension(360, 72));
+        panel.setMaximumSize(new Dimension(360, 72));
+
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        field.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(label);
+        panel.add(Box.createVerticalStrut(8));
+        panel.add(field);
+        return panel;
+    }
+
+    private void setFixedSize(Component component, Dimension size) {
+        component.setPreferredSize(size);
+        component.setMinimumSize(size);
+        component.setMaximumSize(size);
     }
 
     private void registerEvents() {
         btnLogin.addActionListener(evt -> handleLogin());
+        btnExit.addActionListener(evt -> {
+            dispose();
+            if (java.awt.Frame.getFrames().length == 0) {
+                System.exit(0);
+            }
+        });
+        txtUser.addActionListener(evt -> handleLogin());
         txtPass.addActionListener(evt -> handleLogin());
     }
 
     private void handleLogin() {
-        String username = txtUser.getText();
+        String username = txtUser.getText().trim();
         String password = new String(txtPass.getPassword());
 
         try {
@@ -68,125 +178,7 @@ public class LoginFrame extends javax.swing.JFrame {
         }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
-
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        txtUser = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        btnLogin = new javax.swing.JButton();
-        txtPass = new javax.swing.JPasswordField();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        getContentPane().setLayout(new java.awt.GridBagLayout());
-
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jLabel1.setText("QUẢN LÝ QUÁN CÀ PHÊ");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.ipadx = 6;
-        gridBagConstraints.ipady = 28;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 280);
-        getContentPane().add(jLabel1, gridBagConstraints);
-
-        jLabel2.setText("Tên đăng nhập:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.ipadx = 6;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(100, 200, 0, 0);
-        getContentPane().add(jLabel2, gridBagConstraints);
-
-        txtUser.setHorizontalAlignment(javax.swing.JTextField.LEFT);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 156;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(100, 20, 0, 0);
-        getContentPane().add(txtUser, gridBagConstraints);
-        txtUser.getAccessibleContext().setAccessibleName("");
-
-        jLabel3.setText("Mật khẩu:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.ipadx = 37;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 200, 0, 0);
-        getContentPane().add(jLabel3, gridBagConstraints);
-
-        btnLogin.setText("Đăng nhập");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.ipadx = 21;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(38, 70, 177, 0);
-        getContentPane().add(btnLogin, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 156;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(8, 20, 0, 0);
-        getContentPane().add(txtPass, gridBagConstraints);
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        // <editor-fold defaultstate="collapsed" desc=" Look and feel setting code
-        // (optional) ">
-        /*
-         * If Nimbus (introduced in Java SE 6) is not available, stay with the default
-         * look and feel.
-         * For details see
-         * http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        // </editor-fold>
-
-        /* Create and display the form */
+    public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(() -> new LoginFrame().setVisible(true));
     }
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnLogin;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JPasswordField txtPass;
-    private javax.swing.JTextField txtUser;
-    // End of variables declaration//GEN-END:variables
 }

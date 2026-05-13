@@ -12,10 +12,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
+import java.time.format.DateTimeFormatter;
 
 public class StatsPanel extends javax.swing.JPanel {
 
     private final StatsController controller = new StatsController();
+    private static final DateTimeFormatter DISPLAY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private DefaultTableModel revenueModel;
     private DefaultTableModel topProductModel;
 
@@ -214,6 +216,8 @@ public class StatsPanel extends javax.swing.JPanel {
                 BorderFactory.createEmptyBorder(16, 18, 16, 18)));
 
         UIHelper.stylePrimaryButton(btnFilter);
+        btnFilter.setText("Lọc dữ liệu");
+        btnFilter.setPreferredSize(new java.awt.Dimension(160, 34));
         btnFilter.addActionListener(e -> loadStats());
 
         revenueModel = new DefaultTableModel(new Object[]{"Ngày", "Doanh thu"}, 0) {
@@ -224,7 +228,7 @@ public class StatsPanel extends javax.swing.JPanel {
         };
         tblRevenueByDate.setModel(revenueModel);
         UIHelper.styleTable(tblRevenueByDate);
-        tblRevenueByDate.getColumnModel().getColumn(1).setCellRenderer(UIHelper.createCellRenderer(SwingConstants.RIGHT));
+        UIHelper.alignMoneyColumn(tblRevenueByDate, 1);
 
         topProductModel = new DefaultTableModel(new Object[]{"Sản phẩm", "Số lượng bán", "Doanh thu"}, 0) {
             @Override
@@ -234,8 +238,10 @@ public class StatsPanel extends javax.swing.JPanel {
         };
         tblTopProducts.setModel(topProductModel);
         UIHelper.styleTable(tblTopProducts);
-        tblTopProducts.getColumnModel().getColumn(1).setCellRenderer(UIHelper.createCellRenderer(SwingConstants.CENTER));
-        tblTopProducts.getColumnModel().getColumn(2).setCellRenderer(UIHelper.createCellRenderer(SwingConstants.RIGHT));
+        UIHelper.alignCenterColumn(tblTopProducts, 1);
+        UIHelper.alignMoneyColumn(tblTopProducts, 2);
+        UIHelper.styleSummaryNumber(lblTotalRevenue);
+        UIHelper.styleSummaryNumber(lblTotalBills);
     }
 
     private void initDefaultDates() {
@@ -267,7 +273,7 @@ public class StatsPanel extends javax.swing.JPanel {
             revenueModel.setRowCount(0);
             for (Map.Entry<LocalDate, BigDecimal> entry : revenueByDate.entrySet()) {
                 revenueModel.addRow(new Object[]{
-                    entry.getKey().toString(),
+                    entry.getKey().format(DISPLAY_DATE_FORMAT),
                     UIHelper.formatMoney(entry.getValue())
                 });
             }

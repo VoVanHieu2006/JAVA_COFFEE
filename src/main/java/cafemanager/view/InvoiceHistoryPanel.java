@@ -8,7 +8,6 @@ import cafemanager.controller.BillController;
 import cafemanager.model.Bill;
 import cafemanager.model.BillDetail;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -27,7 +26,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  *
@@ -35,9 +33,12 @@ import javax.swing.table.DefaultTableCellRenderer;
  */
 public class InvoiceHistoryPanel extends javax.swing.JPanel {
 
+    private static final String STATUS_ALL = "Tất cả";
+    private static final String STATUS_PAID_UI = "Đã thanh toán";
+    private static final String STATUS_PENDING_UI = "Chờ thanh toán";
+    private static final String STATUS_CANCELLED_UI = "Đã hủy";
     private final BillController billController = new BillController();
-    private final DecimalFormat currencyFormat = new DecimalFormat("#,##0");
-    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final List<Bill> currentBills = new ArrayList<>();
     private DefaultTableModel tableModel;
 
@@ -47,6 +48,7 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
     public InvoiceHistoryPanel() {
         initComponents();
         configureLayout();
+        applyStyles();
         dcFromDate.setPreferredSize(new java.awt.Dimension(150, 34));
         dcToDate.setPreferredSize(new java.awt.Dimension(150, 34));
         dcFromDate.setDateFormatString("dd/MM/yyyy");
@@ -58,8 +60,20 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
 
     private void configureLayout() {
         setLayout(new BorderLayout());
+        setBackground(UIHelper.APP_BG);
+        jPanel1.setBackground(UIHelper.APP_BG);
+        jPanel2.setBackground(UIHelper.APP_BG);
+        jPanel4.setBackground(UIHelper.APP_BG);
         jPanel4.setLayout(new BorderLayout());
         jPanel2.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        jPanel2.removeAll();
+        jPanel2.setLayout(new BorderLayout(10, 0));
+        JPanel summaryPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 16, 0));
+        summaryPanel.setOpaque(false);
+        summaryPanel.add(lblTotalInvoices);
+        summaryPanel.add(lblTotalRevenue);
+        jPanel2.add(summaryPanel, BorderLayout.CENTER);
+        jPanel2.add(btnViewDetail, BorderLayout.EAST);
 
         jPanel4.removeAll();
         jPanel4.add(jScrollPane1, BorderLayout.CENTER);
@@ -72,6 +86,34 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
         repaint();
     }
 
+    private void applyStyles() {
+        UIHelper.stylePrimaryButton(btnSearch);
+        UIHelper.styleSecondaryButton(btnRefresh);
+        UIHelper.styleSecondaryButton(btnViewDetail);
+        UIHelper.styleComboBox(cbStatus);
+        cbStatus.removeAllItems();
+        cbStatus.addItem(STATUS_ALL);
+        cbStatus.addItem(STATUS_PAID_UI);
+        cbStatus.addItem(STATUS_PENDING_UI);
+        cbStatus.addItem(STATUS_CANCELLED_UI);
+        lblTotalInvoices.setFont(UIHelper.FONT_BOLD.deriveFont(20f));
+        lblTotalRevenue.setFont(UIHelper.FONT_BOLD.deriveFont(20f));
+        lblTotalInvoices.setForeground(UIHelper.PRIMARY);
+        lblTotalRevenue.setForeground(UIHelper.PRIMARY);
+        lblTotalInvoices.setPreferredSize(new Dimension(260, 36));
+        lblTotalRevenue.setPreferredSize(new Dimension(420, 36));
+        btnViewDetail.setPreferredSize(new Dimension(128, 36));
+
+        java.awt.Component fromDateEditor = dcFromDate.getDateEditor().getUiComponent();
+        if (fromDateEditor instanceof javax.swing.JTextField) {
+            UIHelper.styleTextField((javax.swing.JTextField) fromDateEditor);
+        }
+        java.awt.Component toDateEditor = dcToDate.getDateEditor().getUiComponent();
+        if (toDateEditor instanceof javax.swing.JTextField) {
+            UIHelper.styleTextField((javax.swing.JTextField) toDateEditor);
+        }
+    }
+
     public void reloadInvoices() {
         loadInvoices(null, null, null);
     }
@@ -80,19 +122,11 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
         tableModel = (DefaultTableModel) tblInvoices.getModel();
         UIHelper.styleTable(tblInvoices);
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-        rightRenderer.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-
-        tblInvoices.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
-        tblInvoices.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+        UIHelper.alignMoneyColumn(tblInvoices, 3);
+        UIHelper.alignCenterColumn(tblInvoices, 4);
     }
 
     private void registerEvents() {
-        UIHelper.styleSmallButton(btnSearch);
-        UIHelper.styleSmallButton(btnRefresh);
-        UIHelper.styleButton(btnViewDetail);
         btnSearch.addActionListener(evt -> handleSearch());
         btnRefresh.addActionListener(evt -> handleRefresh());
         btnViewDetail.addActionListener(evt -> handleViewDetail());
@@ -132,7 +166,7 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
                         staffName,
                         createdAt,
                         UIHelper.formatMoney(bill.getTotalAmount()),
-                        bill.getStatus()
+                        mapBillStatus(bill.getStatus())
                 });
             }
 
@@ -165,8 +199,9 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
             return;
         }
 
-        Bill selectedBill = currentBills.get(selectedRow);
-        String billCode = (String) tableModel.getValueAt(selectedRow, 0);
+        int modelRow = tblInvoices.convertRowIndexToModel(selectedRow);
+        Bill selectedBill = currentBills.get(modelRow);
+        String billCode = (String) tableModel.getValueAt(modelRow, 0);
         int billId = parseBillId(billCode);
         if (billId <= 0) {
             JOptionPane.showMessageDialog(this, "Mã hóa đơn không hợp lệ.");
@@ -199,7 +234,7 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
         headerPanel.add(new JLabel("Mã HĐ: " + billCode));
         headerPanel.add(new JLabel("Nhân viên: " + staffName));
         headerPanel.add(new JLabel("Thời gian: " + createdAt));
-        headerPanel.add(new JLabel("Trạng thái: " + bill.getStatus()));
+        headerPanel.add(new JLabel("Trạng thái: " + mapBillStatus(bill.getStatus())));
 
         DefaultTableModel detailModel = new DefaultTableModel(
                 new Object[][] {},
@@ -221,14 +256,9 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
 
         JTable detailTable = new JTable(detailModel);
         UIHelper.styleTable(detailTable);
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-        rightRenderer.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-
-        detailTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        detailTable.getColumnModel().getColumn(1).setCellRenderer(rightRenderer);
-        detailTable.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+        UIHelper.alignCenterColumn(detailTable, 2);
+        UIHelper.alignMoneyColumn(detailTable, 1);
+        UIHelper.alignMoneyColumn(detailTable, 3);
         JScrollPane scrollPane = new JScrollPane(detailTable);
 
         JPanel footerPanel = new JPanel(new BorderLayout());
@@ -236,7 +266,7 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
         String totalText = "Tổng tiền: " + UIHelper.formatMoney(bill.getTotalAmount());
         JLabel totalLabel = new JLabel(totalText);
         JButton closeButton = new JButton("Đóng");
-        UIHelper.styleButton(closeButton);
+        UIHelper.styleSecondaryButton(closeButton);
         closeButton.addActionListener(evt -> dialog.dispose());
 
         footerPanel.add(totalLabel, BorderLayout.WEST);
@@ -258,8 +288,17 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
 
     private String getSelectedStatus() {
         String selected = (String) cbStatus.getSelectedItem();
-        if (selected == null || selected.equalsIgnoreCase("Tất cả")) {
+        if (selected == null || STATUS_ALL.equalsIgnoreCase(selected)) {
             return null;
+        }
+        if (STATUS_PAID_UI.equals(selected)) {
+            return "PAID";
+        }
+        if (STATUS_PENDING_UI.equals(selected)) {
+            return "PENDING";
+        }
+        if (STATUS_CANCELLED_UI.equals(selected)) {
+            return "CANCELLED";
         }
         return selected.trim();
     }
@@ -281,6 +320,22 @@ public class InvoiceHistoryPanel extends javax.swing.JPanel {
 
     private String formatMoney(BigDecimal amount) {
         return UIHelper.formatMoney(amount);
+    }
+
+    private String mapBillStatus(String status) {
+        if (status == null) {
+            return "";
+        }
+        switch (status.toUpperCase()) {
+            case "PAID":
+                return "Đã thanh toán";
+            case "PENDING":
+                return "Chờ thanh toán";
+            case "CANCELLED":
+                return "Đã hủy";
+            default:
+                return status;
+        }
     }
 
     /**
