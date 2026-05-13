@@ -4,20 +4,17 @@
  */
 package cafemanager.view;
 
-import cafemanager.controller.BillController;
-import cafemanager.dao.ProductDAO;
+import cafemanager.controller.PosController;
 import cafemanager.dto.POSOrderItem;
-import cafemanager.model.Bill;
-import cafemanager.model.BillDetail;
 import cafemanager.model.Product;
 import cafemanager.util.SessionManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import javax.swing.BorderFactory;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JSplitPane;
 import javax.swing.ListSelectionModel;
@@ -29,10 +26,8 @@ import javax.swing.table.DefaultTableModel;
  */
 public class POSPanel extends javax.swing.JPanel {
 
-    private final ProductDAO productDAO = new ProductDAO();
-    private final BillController billController = new BillController();
-    private final List<POSOrderItem> orderItems = new ArrayList<>();
-    private final List<Product> displayedProducts = new ArrayList<>();
+    private final PosController posController;
+    private List<Product> displayedProducts;
     private DefaultTableModel productTableModel;
     private DefaultTableModel orderTableModel;
 
@@ -40,11 +35,15 @@ public class POSPanel extends javax.swing.JPanel {
      * Creates new form POSPanel
      */
     public POSPanel() {
+        posController = new PosController();
+        displayedProducts = new ArrayList<>();
+        
         initComponents();
         configureLayout();
         applyStyles();
         initTables();
         registerEvents();
+        
         loadProducts();
         updateTotalAmount();
     }
@@ -142,10 +141,10 @@ public class POSPanel extends javax.swing.JPanel {
         tblOrderItems.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         tblOrderItems.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
 
-        tblOrderItems.getColumnModel().getColumn(0).setHeaderValue("T\u00ean m\u00f3n");
-        tblOrderItems.getColumnModel().getColumn(1).setHeaderValue("Gi\u00e1");
+        tblOrderItems.getColumnModel().getColumn(0).setHeaderValue("Tên món");
+        tblOrderItems.getColumnModel().getColumn(1).setHeaderValue("Giá");
         tblOrderItems.getColumnModel().getColumn(2).setHeaderValue("SL");
-        tblOrderItems.getColumnModel().getColumn(3).setHeaderValue("T\u1ed5ng");
+        tblOrderItems.getColumnModel().getColumn(3).setHeaderValue("Tổng");
         tblOrderItems.getTableHeader().repaint();
     }
 
@@ -171,45 +170,25 @@ public class POSPanel extends javax.swing.JPanel {
         });
     }
 
-    private void loadProducts() {
-        displayedProducts.clear();
-        productTableModel.setRowCount(0);
-
-        List<Product> products = productDAO.findAllActive();
-        System.out.println("Loaded products: " + products.size());
-        for (Product product : products) {
-            String categoryName = product.getCategory() != null ? product.getCategory().getCategoryName() : "";
-            displayedProducts.add(product);
-            productTableModel.addRow(new Object[] {
-                    product.getProductName(),
-                    UIHelper.formatMoney(product.getPrice()),
-                    categoryName
-            });
-        }
+    public void loadProducts() {
+        displayedProducts = posController.loadAllActiveProducts();
+        refreshProductTable(displayedProducts);
     }
 
     private void filterProducts() {
-        String keyword = txtSearch.getText();
-        if (keyword == null) {
-            keyword = "";
-        }
-        keyword = keyword.trim().toLowerCase();
+        displayedProducts = posController.filterProducts(txtSearch.getText());
+        refreshProductTable(displayedProducts);
+    }
 
-        displayedProducts.clear();
+    private void refreshProductTable(List<Product> products) {
         productTableModel.setRowCount(0);
-
-        List<Product> products = productDAO.findAllActive();
         for (Product product : products) {
-            if (product.getProductName() != null
-                    && product.getProductName().toLowerCase().contains(keyword)) {
-                String categoryName = product.getCategory() != null ? product.getCategory().getCategoryName() : "";
-                displayedProducts.add(product);
-                productTableModel.addRow(new Object[] {
-                        product.getProductName(),
-                        UIHelper.formatMoney(product.getPrice()),
-                        categoryName
-                });
-            }
+            String categoryName = product.getCategory() != null ? product.getCategory().getCategoryName() : "";
+            productTableModel.addRow(new Object[]{
+                product.getProductName(),
+                UIHelper.formatMoney(product.getPrice()),
+                categoryName
+            });
         }
     }
 
@@ -223,44 +202,26 @@ public class POSPanel extends javax.swing.JPanel {
         int quantity = (int) spnQuantity.getValue();
         Product product = displayedProducts.get(selectedRow);
 
-        POSOrderItem existing = findOrderItem(product.getProductId());
-        if (existing != null) {
-            existing.addQuantity(quantity);
-        } else {
-            orderItems.add(new POSOrderItem(
-                    product.getProductId(),
-                    product.getProductName(),
-                    product.getPrice(),
-                    quantity));
-        }
-
+        posController.addOrUpdateOrderItem(product, quantity);
+        
         refreshOrderTable();
         updateTotalAmount();
     }
 
-    private POSOrderItem findOrderItem(int productId) {
-        for (POSOrderItem item : orderItems) {
-            if (item.getProductId() == productId) {
-                return item;
-            }
-        }
-        return null;
-    }
-
     private void removeSelectedItem() {
         int selectedRow = tblOrderItems.getSelectedRow();
-        if (selectedRow < 0 || selectedRow >= orderItems.size()) {
+        if (selectedRow < 0) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn món cần xóa.");
             return;
         }
 
-        orderItems.remove(selectedRow);
+        posController.removeOrderItem(selectedRow);
         refreshOrderTable();
         updateTotalAmount();
     }
 
     private void cancelOrder() {
-        if (orderItems.isEmpty()) {
+        if (posController.isOrderEmpty()) {
             JOptionPane.showMessageDialog(this, "Hóa đơn hiện tại đang trống.");
             return;
         }
@@ -272,7 +233,7 @@ public class POSPanel extends javax.swing.JPanel {
                 JOptionPane.YES_NO_OPTION);
 
         if (choice == JOptionPane.YES_OPTION) {
-            orderItems.clear();
+            posController.clearOrder();
             refreshOrderTable();
             updateTotalAmount();
         }
@@ -280,33 +241,27 @@ public class POSPanel extends javax.swing.JPanel {
 
     private void refreshOrderTable() {
         orderTableModel.setRowCount(0);
-        for (POSOrderItem item : orderItems) {
-            orderTableModel.addRow(new Object[] {
-                    item.getProductName(),
-                    UIHelper.formatMoney(item.getUnitPrice()),
-                    item.getQuantity(),
-                    UIHelper.formatMoney(item.getSubtotal())
+        for (POSOrderItem item : posController.getOrderItems()) {
+            orderTableModel.addRow(new Object[]{
+                item.getProductName(),
+                UIHelper.formatMoney(item.getUnitPrice()),
+                item.getQuantity(),
+                UIHelper.formatMoney(item.getSubtotal())
             });
         }
     }
 
     private void updateTotalAmount() {
-        BigDecimal total = BigDecimal.ZERO;
-        for (POSOrderItem item : orderItems) {
-            total = total.add(item.getSubtotal());
-        }
+        BigDecimal total = posController.calculateTotalAmount();
         lblTotalAmount.setText("TỔNG TIỀN: " + UIHelper.formatMoney(total));
     }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
@@ -489,8 +444,8 @@ public class POSPanel extends javax.swing.JPanel {
                                 javax.swing.GroupLayout.PREFERRED_SIZE));
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnPayActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnPayActionPerformed
-        if (orderItems.isEmpty()) {
+    private void btnPayActionPerformed(java.awt.event.ActionEvent evt) {                                       
+        if (posController.isOrderEmpty()) {
             JOptionPane.showMessageDialog(this, "Hóa đơn chưa có sản phẩm nào.");
             return;
         }
@@ -510,35 +465,17 @@ public class POSPanel extends javax.swing.JPanel {
             return;
         }
 
-        Bill bill = new Bill();
-        bill.setAccountId(SessionManager.getCurrentAccount().getAccountId());
-        bill.setStatus("PAID");
-
-        BigDecimal total = BigDecimal.ZERO;
-        List<BillDetail> details = new ArrayList<>();
-        for (POSOrderItem item : orderItems) {
-            BillDetail detail = new BillDetail(
-                    item.getProductId(),
-                    item.getProductName(),
-                    item.getUnitPrice(),
-                    item.getQuantity());
-            details.add(detail);
-            total = total.add(detail.getSubtotal());
-        }
-
-        bill.setTotalAmount(total);
-        bill.setBillDetails(details);
-
-        boolean success = billController.pay(bill);
+        int accountId = SessionManager.getCurrentAccount().getAccountId();
+        boolean success = posController.processPayment(accountId);
+        
         if (success) {
             JOptionPane.showMessageDialog(this, "Thanh toán thành công.");
-            orderItems.clear();
             refreshOrderTable();
             updateTotalAmount();
         } else {
             JOptionPane.showMessageDialog(this, "Thanh toán thất bại. Vui lòng thử lại.");
         }
-    }// GEN-LAST:event_btnPayActionPerformed
+    }
 
     private void txtSearchActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_txtSearchActionPerformed
         filterProducts();

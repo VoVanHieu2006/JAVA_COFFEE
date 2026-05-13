@@ -9,50 +9,85 @@ public class Bill {
     private int billId;
     private int accountId;
     private LocalDateTime createdAt;
-    private BigDecimal totalAmount;    // ✅ BigDecimal
-    private String status;             // "PENDING", "PAID", "CANCELLED"
-    
-    // Composition: Bill chứa danh sách BillDetail
+    private BigDecimal totalAmount = BigDecimal.ZERO;
+    private String status = "PENDING";
     private List<BillDetail> billDetails = new ArrayList<>();
-    
-    // Tham chiếu đến Account (để hiển thị tên nhân viên)
     private Account account;
 
-    public Bill() {}
+    public Bill() {
+    }
 
     public Bill(int accountId, BigDecimal totalAmount, String status) {
         this.accountId = accountId;
-        this.totalAmount = totalAmount;
-        this.status = status;
+        setTotalAmount(totalAmount);
+        setStatus(status);
         this.createdAt = LocalDateTime.now();
     }
 
-    // Helper method: Thêm chi tiết vào hóa đơn
     public void addDetail(BillDetail detail) {
+        if (detail == null) {
+            return;
+        }
         billDetails.add(detail);
-        // Tự cập nhật totalAmount khi thêm món
-        this.totalAmount = this.totalAmount.add(detail.getSubtotal());
+        totalAmount = totalAmount.add(detail.getSubtotal());
     }
 
-    // Getters & Setters
-    public int getBillId() { return billId; }
-    public void setBillId(int billId) { this.billId = billId; }
+    public int getBillId() {
+        return billId;
+    }
 
-    public int getAccountId() { return accountId; }
-    public void setAccountId(int accountId) { this.accountId = accountId; }
+    public void setBillId(int billId) {
+        this.billId = billId;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public int getAccountId() {
+        return accountId;
+    }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public void setAccountId(int accountId) {
+        this.accountId = accountId;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-    public List<BillDetail> getBillDetails() { return billDetails; }
-    public void setBillDetails(List<BillDetail> billDetails) { this.billDetails = billDetails; }
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
-    public Account getAccount() { return account; }
-    public void setAccount(Account account) { this.account = account; }
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount == null ? BigDecimal.ZERO : totalAmount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        if (status == null || !(status.equalsIgnoreCase("PENDING") || status.equalsIgnoreCase("PAID") || status.equalsIgnoreCase("CANCELLED"))) {
+            throw new IllegalArgumentException("Trạng thái hóa đơn không hợp lệ.");
+        }
+        this.status = status.toUpperCase();
+    }
+
+    public List<BillDetail> getBillDetails() {
+        return billDetails;
+    }
+
+    public void setBillDetails(List<BillDetail> billDetails) {
+        this.billDetails = billDetails == null ? new ArrayList<>() : billDetails;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
 }

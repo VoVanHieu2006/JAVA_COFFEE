@@ -4,42 +4,30 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DBConnection {
+public final class DBConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/java_coffee_db";
-    private static final String USER = "root";
-    private static final String PASSWORD = "";
-
-    private static Connection connection = null;
+    private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/java_coffee_db"
+            + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8";
+    private static final String DEFAULT_USER = "root";
+    private static final String DEFAULT_PASSWORD = "";
 
     private DBConnection() {
     }
 
-    public static Connection getConnection() {
+    public static Connection getConnection() throws SQLException {
         try {
-            if (connection == null || connection.isClosed()) {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                System.out.println("Connected to java_coffee_db successfully!");
-            }
-        } catch (ClassNotFoundException | SQLException e) {
-            System.err.println("Connection failed!");
-            e.printStackTrace();
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Không tìm thấy MySQL JDBC Driver.", e);
         }
 
-        return connection;
+        String url = System.getProperty("db.url", System.getenv().getOrDefault("DB_URL", DEFAULT_URL));
+        String user = System.getProperty("db.user", System.getenv().getOrDefault("DB_USER", DEFAULT_USER));
+        String password = System.getProperty("db.password", System.getenv().getOrDefault("DB_PASSWORD", DEFAULT_PASSWORD));
+
+        return DriverManager.getConnection(url, user, password);
     }
 
     public static void closeConnection() {
-        if (connection != null) {
-            try {
-                if (!connection.isClosed()) {
-                    connection.close();
-                }
-                connection = null;
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

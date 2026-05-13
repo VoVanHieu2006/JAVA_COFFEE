@@ -1,46 +1,89 @@
 package cafemanager.model;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Account {
     private int accountId;
     private String username;
-    private String password;      // Đã hash (BCrypt)
+    private String password;
     private String fullName;
-    private String role;          // "ADMIN" hoặc "STAFF"
-    private boolean isActive;
+    private String role;
+    private boolean active = true;
     private LocalDateTime createdAt;
 
-    public Account() {}
-
-    public Account(int accountId, String username, String fullName, String role, boolean isActive) {
-        this.accountId = accountId;
-        this.username = username;
-        this.fullName = fullName;
-        this.role = role;
-        this.isActive = isActive;
+    public Account() {
     }
 
-    // Getters & Setters
-    public int getAccountId() { return accountId; }
-    public void setAccountId(int accountId) { this.accountId = accountId; }
+    public Account(int accountId, String username, String fullName, String role, boolean active) {
+        this.accountId = accountId;
+        setUsername(username);
+        setFullName(fullName);
+        setRole(role);
+        this.active = active;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public int getAccountId() {
+        return accountId;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public void setAccountId(int accountId) {
+        this.accountId = accountId;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public void setUsername(String username) {
+        if (username == null || username.trim().length() < 4) {
+            throw new IllegalArgumentException("Tên đăng nhập phải có ít nhất 4 ký tự.");
+        }
+        this.username = username.trim();
+    }
 
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
+    public String getPassword() {
+        return password;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Họ tên không được để trống.");
+        }
+        this.fullName = fullName.trim();
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        if (role == null || !(role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("STAFF"))) {
+            throw new IllegalArgumentException("Vai trò tài khoản không hợp lệ.");
+        }
+        this.role = role.toUpperCase();
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
