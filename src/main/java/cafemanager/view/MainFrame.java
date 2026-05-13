@@ -39,9 +39,12 @@ public class MainFrame extends javax.swing.JFrame {
     private void applyStyles() {
         setMinimumSize(new java.awt.Dimension(900, 550));
         setSize(1050, 620);
+        getContentPane().setBackground(UIHelper.APP_BG);
+        jPanel1.setBackground(UIHelper.APP_BG);
+        jTabbedPanel.setBackground(UIHelper.APP_BG);
 
         lblHello.setFont(UIHelper.FONT_BASE.deriveFont(java.awt.Font.BOLD, 16f));
-        UIHelper.styleButton(btnLogOut);
+        UIHelper.styleSecondaryButton(btnLogOut);
         btnLogOut.setPreferredSize(new java.awt.Dimension(110, 36));
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16));

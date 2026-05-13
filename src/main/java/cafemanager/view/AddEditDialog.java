@@ -14,6 +14,8 @@ import java.util.List;
  * @author Acer
  */
 public class AddEditDialog extends javax.swing.JDialog {
+    private static final String ACTIVE_UI = "Đang hoạt động";
+    private static final String INACTIVE_UI = "Ngừng hoạt động";
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(AddEditDialog.class.getName());
 
@@ -27,11 +29,13 @@ public class AddEditDialog extends javax.swing.JDialog {
     public AddEditDialog(java.awt.Frame parent, List<Category> categories) {
         super(parent, true);
         initComponents();
+        applyStyles();
         setTitle("Thêm Sản phẩm");
         jLabel5.setText("THÊM SẢN PHẨM");
+        btSave.setText("Thêm");
         populateCategories(categories);
         // Active mặc định là true khi thêm mới
-        cbbActive.setSelectedItem("Active");
+        cbbActive.setSelectedItem(ACTIVE_UI);
         centerOnParent(parent);
         registerEvents();
     }
@@ -41,8 +45,10 @@ public class AddEditDialog extends javax.swing.JDialog {
     public AddEditDialog(java.awt.Frame parent, List<Category> categories, Product product) {
         super(parent, true);
         initComponents();
+        applyStyles();
         setTitle("Sửa Sản phẩm");
         jLabel5.setText("SỬA SẢN PHẨM");
+        btSave.setText("Lưu thay đổi");
         this.editingProduct = product;
         populateCategories(categories);
         fillForm(product);
@@ -76,15 +82,15 @@ public class AddEditDialog extends javax.swing.JDialog {
         });
  
         cbbActive.removeAllItems();
-        cbbActive.addItem("Active");
-        cbbActive.addItem("Inactive");
+        cbbActive.addItem(ACTIVE_UI);
+        cbbActive.addItem(INACTIVE_UI);
     }
  
     private void fillForm(Product p) {
         tfName.setText(p.getProductName());
         spnPrice.setValue(p.getPrice().doubleValue());
         tfDescription.setText(p.getDescription());
-        cbbActive.setSelectedItem(p.isActive() ? "Active" : "Inactive");
+        cbbActive.setSelectedItem(p.isActive() ? ACTIVE_UI : INACTIVE_UI);
  
         // Chọn đúng category
         for (int i = 0; i < cbbCategory.getItemCount(); i++) {
@@ -140,7 +146,7 @@ public class AddEditDialog extends javax.swing.JDialog {
         p.setPrice(BigDecimal.valueOf(priceDouble));
         p.setCategoryId(((Category) catObj).getCategoryId());
         p.setDescription(tfDescription.getText());
-        p.setActive("Active".equals(cbbActive.getSelectedItem()));
+        p.setActive(ACTIVE_UI.equals(cbbActive.getSelectedItem()));
  
         result = p;
         dispose();
@@ -148,6 +154,42 @@ public class AddEditDialog extends javax.swing.JDialog {
  
     private void centerOnParent(java.awt.Frame parent) {
         setLocationRelativeTo(parent);
+    }
+
+    private void applyStyles() {
+        getContentPane().setBackground(UIHelper.APP_BG);
+        UIHelper.styleSectionTitle(jLabel5);
+        UIHelper.styleTextField(tfName);
+        UIHelper.styleTextField(tfDescription);
+        UIHelper.styleComboBox(cbbCategory);
+        UIHelper.styleComboBox(cbbActive);
+        UIHelper.stylePrimaryButton(btSave);
+        UIHelper.styleSecondaryButton(btCancel);
+        tfName.setPreferredSize(new java.awt.Dimension(340, 38));
+        tfDescription.setPreferredSize(new java.awt.Dimension(340, 38));
+        cbbCategory.setPreferredSize(new java.awt.Dimension(340, 38));
+        cbbActive.setPreferredSize(new java.awt.Dimension(180, 38));
+        spnPrice.setPreferredSize(new java.awt.Dimension(180, 38));
+        spnPrice.setFont(UIHelper.FONT_BASE);
+        btSave.setPreferredSize(new java.awt.Dimension(140, 38));
+        btCancel.setPreferredSize(new java.awt.Dimension(100, 38));
+        alignActionButtons();
+    }
+
+    private void alignActionButtons() {
+        if (!(getContentPane().getLayout() instanceof java.awt.GridBagLayout)) {
+            return;
+        }
+        java.awt.GridBagLayout layout = (java.awt.GridBagLayout) getContentPane().getLayout();
+        java.awt.GridBagConstraints saveConstraints = layout.getConstraints(btSave);
+        saveConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        saveConstraints.insets = new java.awt.Insets(20, 28, 22, 10);
+        layout.setConstraints(btSave, saveConstraints);
+
+        java.awt.GridBagConstraints cancelConstraints = layout.getConstraints(btCancel);
+        cancelConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        cancelConstraints.insets = new java.awt.Insets(20, 0, 22, 28);
+        layout.setConstraints(btCancel, cancelConstraints);
     }
 
     /**
