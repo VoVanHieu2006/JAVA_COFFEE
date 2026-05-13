@@ -1,183 +1,346 @@
 package cafemanager.view;
- 
+
 import cafemanager.controller.MenuController;
 import cafemanager.model.Category;
- 
-import javax.swing.*;
+import cafemanager.model.Product;
+import java.awt.Frame;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.JList;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
- 
+
 /**
- * MenuPanel — chỉ chứa code giao diện và gọi MenuController.
- * Toàn bộ logic nghiệp vụ nằm trong MenuController.
+ * Panel quản lý thực đơn.
  *
- *   - tfProductName  : filter tên sản phẩm   (SEARCH, không dùng để Add/Edit)
- *   - tfPrice        : filter giá "from"      (SEARCH)
- *   - tfPriceTo      : filter giá "to"        (SEARCH)
- *   - cbbCategory    : filter theo danh mục   (SEARCH, "-- Tất cả --" = không lọc)
- *
- * Add / Edit mở AddEditPanel dialog riêng.
+ * View chịu trách nhiệm hiển thị JTable/JComboBox/Dialog. Controller chỉ trả dữ liệu
+ * và thực hiện nghiệp vụ thông qua DAO. Cách tách này giúp module bám MVC hơn.
  */
-
-
 public class MenuPanel extends javax.swing.JPanel {
 
-        
-    
     private final MenuController controller = new MenuController();
-    private Runnable onDataChangedCallback;
- 
-    public void setOnDataChangedCallback(Runnable callback) {
-        this.onDataChangedCallback = callback;
-        controller.loadFunction(this.onDataChangedCallback);
-    }
-    
-    
-    
- 
     private DefaultTableModel catModel;
     private DefaultTableModel prodModel;
- 
+    private List<Category> categoryCache = new ArrayList<>();
+
     public MenuPanel() {
         initComponents();
         initModels();
         initEvents();
         loadAll();
     }
- 
-    // ─── Khởi tạo model ──────────────────────────────────────────────────────
- 
+
+    public void setOnDataChangedCallback(Runnable callback) {
+        controller.setDataChangedCallback(callback);
+    }
+
     private void initModels() {
-        
-        
-        
         catModel = (DefaultTableModel) tbCategories.getModel();
         prodModel = (DefaultTableModel) tbProducts.getModel();
- 
-        // Renderer cho cbbCategory (hiển thị tên category)
+
         cbbCategory.setRenderer(new DefaultListCellRenderer() {
             @Override
             public java.awt.Component getListCellRendererComponent(
                     JList<?> list, Object value, int index,
                     boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Category) setText(((Category) value).getCategoryName());
+                if (value instanceof Category) {
+                    setText(((Category) value).getCategoryName());
+                }
                 return this;
             }
         });
     }
- 
-    // ─── Đăng ký sự kiện ────────────────────────────────────────────────────
- 
+
     private void initEvents() {
- 
-        // ── Category ──────────────────────────────────────────────────────
-        btAddCat.addActionListener(e ->
-            controller.addCategory(this, catModel, getCbbCategoryTyped())
-        );
- 
-        btEditCat.addActionListener(e ->
-            controller.editCategory(this,
-                tbCategories.getSelectedRow(),
-                catModel, prodModel,
-                getCbbCategoryTyped())
-        );
- 
-        btDelCat.addActionListener(e ->
-            controller.deleteCategory(this,
-                tbCategories.getSelectedRow(), catModel, getCbbCategoryTyped())
-        );
- 
-        // Tìm kiếm danh mục theo tên khi gõ
+        btAddCat.addActionListener(e -> addCategory());
+        btEditCat.addActionListener(e -> editCategory());
+        btDelCat.addActionListener(e -> deleteCategory());
+
         tfSearchByCategory.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override public void insertUpdate(javax.swing.event.DocumentEvent e)  { searchCat(); }
-            @Override public void removeUpdate(javax.swing.event.DocumentEvent e)  { searchCat(); }
-            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { searchCat(); }
-            private void searchCat() {
-                String kw = tfSearchByCategory.getText();
-                if (kw.isBlank()) controller.loadCategories(catModel, getCbbCategoryTyped());
-                else              controller.searchCategories(kw, catModel);
-            }
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { searchCategory(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { searchCategory(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { searchCategory(); }
         });
- 
-        // ── Product buttons ──────────────────────────────────────────────
-        // Add: mở AddEditPanel dialog
-        btAddProduct.addActionListener(e -> {
-            java.awt.Frame parentFrame = (java.awt.Frame)
-                    SwingUtilities.getWindowAncestor(this);
-            controller.openAddProductDialog(parentFrame, prodModel);
-        });
- 
-        // Edit: mở AddEditPanel dialog với data hàng đang chọn
-        btEditProduct.addActionListener(e -> {
-            java.awt.Frame parentFrame = (java.awt.Frame)
-                    SwingUtilities.getWindowAncestor(this);
-            controller.openEditProductDialog(parentFrame,
-                    tbProducts.getSelectedRow(), prodModel);
-        });
- 
-        // Delete
-        btDelProduct.addActionListener(e ->
-            controller.deleteProduct(this,
-                    tbProducts.getSelectedRow(), prodModel)
-        );
- 
-        // ── Product search (realtime khi thay đổi bất kỳ trường nào) ────
-        javax.swing.event.DocumentListener searchListener =
-                new javax.swing.event.DocumentListener() {
-            @Override public void insertUpdate(javax.swing.event.DocumentEvent e)  { doSearchProduct(); }
-            @Override public void removeUpdate(javax.swing.event.DocumentEvent e)  { doSearchProduct(); }
-            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { doSearchProduct(); }
+
+        btAddProduct.addActionListener(e -> addProduct());
+        btEditProduct.addActionListener(e -> editProduct());
+        btDelProduct.addActionListener(e -> hideProduct());
+
+        javax.swing.event.DocumentListener productSearchListener = new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { searchProducts(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { searchProducts(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { searchProducts(); }
         };
- 
-        tfProductName.getDocument().addDocumentListener(searchListener);
-        tfPriceTo.getDocument().addDocumentListener(searchListener);
-        tfPriceFrom.getDocument().addDocumentListener(searchListener);
- 
-        // ComboBox category filter
-        cbbCategory.addActionListener(e -> doSearchProduct());
+        tfProductName.getDocument().addDocumentListener(productSearchListener);
+        tfPriceFrom.getDocument().addDocumentListener(productSearchListener);
+        tfPriceTo.getDocument().addDocumentListener(productSearchListener);
+        cbbCategory.addActionListener(e -> searchProducts());
     }
- 
-    /** Gọi controller.searchProducts với các giá trị filter hiện tại. */
-    private void doSearchProduct() {
-        String name      = tfProductName.getText();
-        String priceFrom = tfPriceFrom.getText();
-        String priceTo   = tfPriceTo.getText();
-        Category cat     = getSelectedFilterCategory();
-        
-        controller.searchProducts(name, priceFrom, priceTo, cat, prodModel);
-    }
- 
-    // ─── Load dữ liệu ban đầu ────────────────────────────────────────────────
- 
+
     private void loadAll() {
-        controller.loadCategories(catModel, getCbbCategoryTyped());
-        controller.loadProducts(prodModel);
+        loadCategories();
+        loadProducts();
     }
- 
-    // ─── Helper cast ─────────────────────────────────────────────────────────
- 
-    @SuppressWarnings("unchecked")
-    private JComboBox<Category> getCbbCategoryTyped() {
-        return (JComboBox<Category>) (JComboBox<?>) cbbCategory;
+
+    private void loadCategories() {
+        try {
+            categoryCache = controller.loadCategories();
+            displayCategories(categoryCache);
+            displayCategoryFilter(categoryCache);
+        } catch (Exception ex) {
+            showError("Không thể tải danh mục: " + ex.getMessage());
+        }
     }
- 
-    /**
-     * Trả về Category đang chọn trong filter combo.
-     * Nếu là "-- Tất cả --" (id=0) hoặc null → trả về null (không lọc theo category).
-     */
+
+    private void searchCategory() {
+        try {
+            displayCategories(controller.searchCategories(tfSearchByCategory.getText()));
+        } catch (Exception ex) {
+            showError("Lỗi tìm kiếm danh mục: " + ex.getMessage());
+        }
+    }
+
+    private void loadProducts() {
+        try {
+            displayProducts(controller.loadProducts());
+        } catch (Exception ex) {
+            showError("Không thể tải sản phẩm: " + ex.getMessage());
+        }
+    }
+
+    private void searchProducts() {
+        try {
+            displayProducts(controller.searchProducts(
+                    tfProductName.getText(),
+                    tfPriceFrom.getText(),
+                    tfPriceTo.getText(),
+                    getSelectedFilterCategory()));
+        } catch (Exception ex) {
+            showError("Lỗi tìm kiếm sản phẩm: " + ex.getMessage());
+        }
+    }
+
+    private void addCategory() {
+        String name = JOptionPane.showInputDialog(this, "Tên danh mục mới:",
+                "Thêm danh mục", JOptionPane.PLAIN_MESSAGE);
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        try {
+            if (controller.addCategory(name.trim()) > 0) {
+                showInfo("Thêm danh mục thành công.");
+                loadCategories();
+                loadProducts();
+            }
+        } catch (Exception ex) {
+            showError("Lỗi thêm danh mục: " + ex.getMessage());
+        }
+    }
+
+    private void editCategory() {
+        int modelRow = getSelectedModelRow(tbCategories);
+        if (modelRow < 0) {
+            showWarning("Vui lòng chọn danh mục cần sửa.");
+            return;
+        }
+        int categoryId = ((Number) catModel.getValueAt(modelRow, 0)).intValue();
+        String currentName = String.valueOf(catModel.getValueAt(modelRow, 1));
+        String newName = (String) JOptionPane.showInputDialog(this,
+                "Tên danh mục:", "Sửa danh mục",
+                JOptionPane.PLAIN_MESSAGE, null, null, currentName);
+        if (newName == null || newName.isBlank()) {
+            return;
+        }
+        try {
+            if (controller.updateCategory(categoryId, newName.trim())) {
+                showInfo("Cập nhật danh mục thành công.");
+                loadCategories();
+                loadProducts();
+            }
+        } catch (Exception ex) {
+            showError("Lỗi sửa danh mục: " + ex.getMessage());
+        }
+    }
+
+    private void deleteCategory() {
+        int modelRow = getSelectedModelRow(tbCategories);
+        if (modelRow < 0) {
+            showWarning("Vui lòng chọn danh mục cần xóa.");
+            return;
+        }
+        int categoryId = ((Number) catModel.getValueAt(modelRow, 0)).intValue();
+        String categoryName = String.valueOf(catModel.getValueAt(modelRow, 1));
+        try {
+            if (controller.isCategoryInUse(categoryId)) {
+                showWarning("Danh mục \"" + categoryName + "\" đang được dùng bởi sản phẩm, không thể xóa.");
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Xóa danh mục \"" + categoryName + "\"?",
+                    "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+            if (controller.deleteCategory(categoryId)) {
+                showInfo("Đã xóa danh mục.");
+                loadCategories();
+            }
+        } catch (Exception ex) {
+            showError("Lỗi xóa danh mục: " + ex.getMessage());
+        }
+    }
+
+    private void addProduct() {
+        if (!ensureCategoryCache()) {
+            return;
+        }
+        AddEditDialog dialog = new AddEditDialog(getParentFrame(), categoryCache);
+        dialog.setVisible(true);
+        Product result = dialog.getResult();
+        if (result == null) {
+            return;
+        }
+        try {
+            if (controller.addProduct(result) > 0) {
+                showInfo("Thêm sản phẩm thành công.");
+                loadProducts();
+            }
+        } catch (Exception ex) {
+            showError("Lỗi thêm sản phẩm: " + ex.getMessage());
+        }
+    }
+
+    private void editProduct() {
+        int modelRow = getSelectedModelRow(tbProducts);
+        if (modelRow < 0) {
+            showWarning("Vui lòng chọn sản phẩm cần sửa.");
+            return;
+        }
+        if (!ensureCategoryCache()) {
+            return;
+        }
+        int productId = ((Number) prodModel.getValueAt(modelRow, 0)).intValue();
+        try {
+            Product existing = controller.findProductById(productId);
+            if (existing == null) {
+                showWarning("Không tìm thấy sản phẩm cần sửa.");
+                return;
+            }
+            AddEditDialog dialog = new AddEditDialog(getParentFrame(), categoryCache, existing);
+            dialog.setVisible(true);
+            Product result = dialog.getResult();
+            if (result == null) {
+                return;
+            }
+            if (controller.updateProduct(result)) {
+                showInfo("Cập nhật sản phẩm thành công.");
+                loadProducts();
+            }
+        } catch (Exception ex) {
+            showError("Lỗi sửa sản phẩm: " + ex.getMessage());
+        }
+    }
+
+    private void hideProduct() {
+        int modelRow = getSelectedModelRow(tbProducts);
+        if (modelRow < 0) {
+            showWarning("Vui lòng chọn sản phẩm cần ẩn.");
+            return;
+        }
+        int productId = ((Number) prodModel.getValueAt(modelRow, 0)).intValue();
+        String productName = String.valueOf(prodModel.getValueAt(modelRow, 1));
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Sản phẩm \"" + productName + "\" sẽ bị ẩn khỏi thực đơn. Lịch sử hóa đơn vẫn được giữ. Tiếp tục?",
+                "Xác nhận ẩn sản phẩm", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            if (controller.hideProduct(productId)) {
+                showInfo("Sản phẩm đã được ẩn khỏi thực đơn.");
+                loadProducts();
+            }
+        } catch (Exception ex) {
+            showError("Lỗi ẩn sản phẩm: " + ex.getMessage());
+        }
+    }
+
+    private void displayCategories(List<Category> categories) {
+        catModel.setRowCount(0);
+        for (Category category : categories) {
+            catModel.addRow(new Object[]{category.getCategoryId(), category.getCategoryName()});
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void displayCategoryFilter(List<Category> categories) {
+        javax.swing.JComboBox combo = cbbCategory;
+        combo.removeAllItems();
+        for (Category category : controller.buildCategoryFilterItems(categories)) {
+            combo.addItem(category);
+        }
+    }
+
+    private void displayProducts(List<Product> products) {
+        prodModel.setRowCount(0);
+        for (Product product : products) {
+            String categoryName = product.getCategory() == null ? "" : product.getCategory().getCategoryName();
+            prodModel.addRow(new Object[]{
+                product.getProductId(),
+                product.getProductName(),
+                categoryName,
+                product.getPrice(),
+                product.isActive() ? "Active" : "Inactive"
+            });
+        }
+    }
+
+    private boolean ensureCategoryCache() {
+        if (categoryCache == null || categoryCache.isEmpty()) {
+            loadCategories();
+        }
+        if (categoryCache == null || categoryCache.isEmpty()) {
+            showWarning("Cần có ít nhất một danh mục trước khi thêm sản phẩm.");
+            return false;
+        }
+        return true;
+    }
+
     private Category getSelectedFilterCategory() {
         Object selected = cbbCategory.getSelectedItem();
         if (selected instanceof Category) {
-            Category c = (Category) selected;
-            return c.getCategoryId() == 0 ? null : c;
+            Category category = (Category) selected;
+            return category.getCategoryId() == 0 ? null : category;
         }
         return null;
     }
-    
-    
-    
-    
-    
+
+    private int getSelectedModelRow(javax.swing.JTable table) {
+        int viewRow = table.getSelectedRow();
+        return viewRow < 0 ? -1 : table.convertRowIndexToModel(viewRow);
+    }
+
+    private Frame getParentFrame() {
+        return (Frame) SwingUtilities.getWindowAncestor(this);
+    }
+
+    private void showInfo(String message) {
+        JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showWarning(String message) {
+        JOptionPane.showMessageDialog(this, message, "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;

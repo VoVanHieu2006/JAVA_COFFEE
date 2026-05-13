@@ -83,6 +83,7 @@ public class AddEditDialog extends javax.swing.JDialog {
     private void fillForm(Product p) {
         tfName.setText(p.getProductName());
         spnPrice.setValue(p.getPrice().doubleValue());
+        tfDescription.setText(p.getDescription());
         cbbActive.setSelectedItem(p.isActive() ? "Active" : "Inactive");
  
         // Chọn đúng category
@@ -138,10 +139,7 @@ public class AddEditDialog extends javax.swing.JDialog {
         p.setProductName(name);
         p.setPrice(BigDecimal.valueOf(priceDouble));
         p.setCategoryId(((Category) catObj).getCategoryId());
-        p.setActive("Active".equals(cbbCategory.getSelectedItem() instanceof Category
-                ? cbbActive.getSelectedItem()
-                : "Active"));
-        // Active từ cbbActive
+        p.setDescription(tfDescription.getText());
         p.setActive("Active".equals(cbbActive.getSelectedItem()));
  
         result = p;
@@ -163,129 +161,141 @@ public class AddEditDialog extends javax.swing.JDialog {
         java.awt.GridBagConstraints gridBagConstraints;
 
         tfName = new javax.swing.JTextField();
+        spnPrice = new javax.swing.JSpinner();
         cbbCategory = new javax.swing.JComboBox<>();
+        tfDescription = new javax.swing.JTextField();
         cbbActive = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        spnPrice = new javax.swing.JSpinner();
+        jLabel6 = new javax.swing.JLabel();
         btSave = new javax.swing.JButton();
         btCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(460, 330));
         getContentPane().setLayout(new java.awt.GridBagLayout());
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 9;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 156;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(18, 8, 0, 40);
-        getContentPane().add(tfName, gridBagConstraints);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.gridwidth = 5;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 78;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(28, 8, 0, 0);
-        getContentPane().add(cbbCategory, gridBagConstraints);
-
-        cbbActive.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 7;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(28, 8, 0, 0);
-        getContentPane().add(cbbActive, gridBagConstraints);
-
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel1.setText("Name:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(18, 60, 0, 0);
-        getContentPane().add(jLabel1, gridBagConstraints);
-
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel2.setText("Price:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(28, 60, 0, 0);
-        getContentPane().add(jLabel2, gridBagConstraints);
-
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel3.setText("Category:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.gridwidth = 4;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(28, 60, 0, 0);
-        getContentPane().add(jLabel3, gridBagConstraints);
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel4.setText("Active:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 7;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(28, 60, 0, 0);
-        getContentPane().add(jLabel4, gridBagConstraints);
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jLabel5.setForeground(new java.awt.Color(255, 0, 0));
+        jLabel5.setForeground(new java.awt.Color(44, 108, 220));
         jLabel5.setText("PRODUCT");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
+        gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.ipadx = 6;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 18, 0, 0);
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(18, 28, 12, 28);
         getContentPane().add(jLabel5, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(28, 8, 0, 0);
-        getContentPane().add(spnPrice, gridBagConstraints);
 
-        btSave.setBackground(new java.awt.Color(0, 204, 51));
-        btSave.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btSave.setForeground(new java.awt.Color(255, 255, 255));
-        btSave.setText("Save");
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jLabel1.setText("Tên sản phẩm:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 9;
-        gridBagConstraints.gridwidth = 5;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(18, 60, 17, 0);
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 28, 6, 10);
+        getContentPane().add(jLabel1, gridBagConstraints);
+
+        tfName.setPreferredSize(new java.awt.Dimension(250, 32));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 6, 28);
+        getContentPane().add(tfName, gridBagConstraints);
+
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jLabel2.setText("Giá:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 28, 6, 10);
+        getContentPane().add(jLabel2, gridBagConstraints);
+
+        spnPrice.setModel(new javax.swing.SpinnerNumberModel(1000.0d, 1000.0d, 999999999.0d, 1000.0d));
+        spnPrice.setPreferredSize(new java.awt.Dimension(140, 32));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 6, 28);
+        getContentPane().add(spnPrice, gridBagConstraints);
+
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jLabel3.setText("Danh mục:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 28, 6, 10);
+        getContentPane().add(jLabel3, gridBagConstraints);
+
+        cbbCategory.setPreferredSize(new java.awt.Dimension(250, 32));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 6, 28);
+        getContentPane().add(cbbCategory, gridBagConstraints);
+
+        jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jLabel6.setText("Mô tả:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 28, 6, 10);
+        getContentPane().add(jLabel6, gridBagConstraints);
+
+        tfDescription.setPreferredSize(new java.awt.Dimension(250, 32));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 6, 28);
+        getContentPane().add(tfDescription, gridBagConstraints);
+
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jLabel4.setText("Trạng thái:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 28, 6, 10);
+        getContentPane().add(jLabel4, gridBagConstraints);
+
+        cbbActive.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Active", "Inactive" }));
+        cbbActive.setPreferredSize(new java.awt.Dimension(140, 32));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 0, 6, 28);
+        getContentPane().add(cbbActive, gridBagConstraints);
+
+        btSave.setBackground(new java.awt.Color(44, 108, 220));
+        btSave.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btSave.setForeground(new java.awt.Color(255, 255, 255));
+        btSave.setText("Lưu");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(18, 28, 22, 10);
         getContentPane().add(btSave, gridBagConstraints);
 
-        btCancel.setBackground(new java.awt.Color(255, 0, 0));
-        btCancel.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btCancel.setForeground(new java.awt.Color(255, 255, 255));
-        btCancel.setText("Cancel");
+        btCancel.setText("Hủy");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 7;
-        gridBagConstraints.gridy = 9;
-        gridBagConstraints.gridwidth = 6;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(18, 38, 17, 0);
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(18, 0, 22, 28);
         getContentPane().add(btCancel, gridBagConstraints);
 
         pack();
@@ -338,7 +348,9 @@ public class AddEditDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JSpinner spnPrice;
+    private javax.swing.JTextField tfDescription;
     private javax.swing.JTextField tfName;
     // End of variables declaration//GEN-END:variables
 }
